@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.TalkoLoco" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="android:statusBarColor">@color/primary_blue</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/white</item>
+        <item name="android:textSelectHandle">@color/primary_blue</item>
+        <item name="android:textSelectHandleLeft">@color/primary_blue</item>
+        <item name="android:textSelectHandleRight">@color/primary_blue</item>
+        <item name="android:textColorHighlight">#330055F0</item>
+    </style>
+</resources>

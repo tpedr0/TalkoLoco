@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">TalkoLoco</string>
+    <string name="enter_your_phone_number">Enter your phone number</string>
+    <string name="talko_loco_will_need_to_verify_your_account_carrier_charges_may_apply">Talko Loco will need to verify your account. Carrier charges may apply.</string>
+    <string name="your_phone_number">your phone number</string>
+    <string name="next">Next</string>
+    <string name="verify_instructions">Enter the 6-digit code we sent by SMS to %s</string>
+    <string name="edit_profile">Edit profile</string>
+    <string name="profile_picture">Profile picture</string>
+    <string name="enter_your_name_and_add_an_optional_profile_picture">Enter your name and add an optional profile picture.</string>
+    <string name="your_name">Your name</string>
+    <string name="done">Done</string>
+    <string name="edit">Edit</string>
+    <string name="verify_your_phone_number">Verify your phone number</string>
+    <string name="is_this_the_correct_number">Is this the correct number?</string>
+    <string name="yes">Yes</string>
+</resources>
