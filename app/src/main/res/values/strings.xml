@@ -14,4 +14,6 @@
     <string name="verify_your_phone_number">Verify your phone number</string>
     <string name="is_this_the_correct_number">Is this the correct number?</string>
     <string name="yes">Yes</string>
+    <string name="settings">Settings</string>
+    <string name="current_phone_number">Current Phone Number</string>
 </resources>
