@@ -29,6 +29,8 @@
         <activity
             android:name=".views.activities.ProfileCreation"
             android:windowSoftInputMode="adjustResize" />
+
+        <activity android:name=".views.activities.Home" />
     </application>
 
 </manifest>
