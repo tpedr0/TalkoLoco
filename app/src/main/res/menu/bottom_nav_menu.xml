@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item android:title="Communities"
+        android:icon="@drawable/ic_communites"
+        android:id="communities"/>
+    <item android:title="Chats"
+        android:icon="@drawable/ic_chats"
+        android:id="@+id/chats"/>
+    <item android:title="Settings"
+        android:icon="@drawable/ic_settings"
+        android:id="@+id/settings"/>
+</menu>
