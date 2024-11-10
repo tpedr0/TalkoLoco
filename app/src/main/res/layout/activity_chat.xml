@@ -31,7 +31,7 @@
         android:paddingEnd="12dp"
         android:paddingBottom="8dp"
         android:src="@drawable/ic_pfp"
-        android:text="+1(350)454-2345"
+        android:text="@string/_1_350_454_2345"
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="22sp"
@@ -51,7 +51,7 @@
         android:paddingTop="8dp"
         android:paddingEnd="12dp"
         android:paddingBottom="8dp"
-        android:text="Nov 11"
+        android:text="@string/nov_11"
         android:textAlignment="center"
         android:textColor="@color/black"
         android:textSize="18sp"
@@ -71,7 +71,7 @@
         android:paddingTop="8dp"
         android:paddingEnd="12dp"
         android:paddingBottom="8dp"
-        android:text="Messages are end-to-end encrypted.\nNo one outside this chat, not even Talko Loco, can read or listen to them."
+        android:text="@string/messages_are_end_to_end_encrypted_nno_one_outside_this_chat_not_even_talko_loco_can_read_or_listen_to_them"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="14sp"
@@ -104,12 +104,12 @@
         android:layout_width="327dp"
         android:layout_height="wrap_content"
         android:background="@drawable/contact_chat"
-        android:hint="This is my outfit for later! I'm very Excited! "
+        android:hint="@string/this_is_my_outfit_for_later_i_m_very_excited"
         android:inputType="textMultiLine"
         android:padding="12dp"
         android:scrollHorizontally="false"
         android:textSize="16sp"
-        tools:ignore="MissingConstraints"
+        tools:ignore="MissingConstraints,TextViewEdits"
         tools:layout_editor_absoluteX="60dp"
         tools:layout_editor_absoluteY="230dp"/>
 
@@ -121,10 +121,10 @@
         android:inputType="textMultiLine"
         android:padding="12dp"
         android:scrollHorizontally="false"
-        android:text="Dang! you look very pretty!! :)"
+        android:text="@string/dang_you_look_very_pretty"
         android:textColor="@color/white"
         android:textSize="16sp"
-        tools:ignore="MissingConstraints"
+        tools:ignore="MissingConstraints,TextViewEdits"
         tools:layout_editor_absoluteX="91dp"
         tools:layout_editor_absoluteY="476dp" />
 
@@ -153,15 +153,17 @@
         app:layout_constraintHorizontal_bias="0.298"
         app:layout_constraintStart_toStartOf="parent"
         tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteY="276dp" />
+        tools:layout_editor_absoluteY="276dp"
+        android:contentDescription="@string/randomdescription"/>
 
     <EditText
         android:id="@+id/messageInput"
         android:layout_width="405dp"
         android:layout_height="34dp"
         android:layout_marginBottom="4dp"
+        android:autofillHints=""
         android:background="@drawable/edit_text_background"
-        android:hint="Type message..."
+        android:hint="@string/type_message"
         android:gravity="center"
         android:inputType="text"
         android:textSize="15sp"
@@ -170,7 +172,7 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
-        android:id="@+id/attatchments"
+        android:id="@+id/attachments"
         android:layout_width="48dp"
         android:layout_height="48dp"
         android:layout_marginStart="344dp"
@@ -186,7 +188,7 @@
         android:layout_width="60dp"
         android:layout_height="43dp"
         android:background="#F5F5F5"
-        android:contentDescription="camera"
+        android:contentDescription="@string/camera"
         android:src="@drawable/ic_camera"
         tools:layout_editor_absoluteX="352dp"
         tools:layout_editor_absoluteY="693dp"
@@ -198,7 +200,8 @@
         android:src="@drawable/ic_add"
         tools:layout_editor_absoluteX="3dp"
         tools:layout_editor_absoluteY="689dp"
-        tools:ignore="MissingConstraints" />
+        tools:ignore="MissingConstraints"
+        android:contentDescription="@string/randomdescription"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

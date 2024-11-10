@@ -20,4 +20,12 @@
     <string name="startingMessage">Tap on [symbol] in the top right corner to start a new chat. You can chat with contacts who have TalkoLoco installed on thier phone.</string>
     <string name="chats">Chats</string>
     <string name="start_messaging">Start messaging</string>
+    <string name="randomdescription">randomDescription</string>
+    <string name="type_message">Type message...</string>
+    <string name="camera">camera</string>
+    <string name="dang_you_look_very_pretty">Dang! you look very pretty!! :)</string>
+    <string name="this_is_my_outfit_for_later_i_m_very_excited">This is my outfit for later! I\'m very Excited!</string>
+    <string name="messages_are_end_to_end_encrypted_nno_one_outside_this_chat_not_even_talko_loco_can_read_or_listen_to_them">Messages are end-to-end encrypted.\nNo one outside this chat, not even Talko Loco, can read or listen to them.</string>
+    <string name="_1_350_454_2345">+1(350)454-2345</string>
+    <string name="nov_11">Nov 11</string>
 </resources>
