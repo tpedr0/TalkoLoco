@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Message background -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="16dp"/>
+            <solid android:color="@color/dark_gray"/>
+        </shape>
+    </item>
+    <!-- Lock icon overlay -->
+    <item android:drawable="@drawable/images" android:gravity="center_vertical|start" android:left="12dp" android:width="20dp"
+        android:height="20dp" >
+
+    </item>
+</layer-list>

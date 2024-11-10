@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    app:layout_constraintTop_toTopOf="parent"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/disabled_gray"
+>
+
+    <ImageView
+        android:id="@+id/profileIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="344dp"
+        android:contentDescription="@string/profile_picture"
+        android:src="@drawable/pfp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.696" />
+
+    <TextView
+        android:id="@+id/contact"
+        android:layout_width="412dp"
+        android:layout_height="57dp"
+        android:background="@color/white"
+        android:padding="15dp"
+        android:paddingStart="40dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp"
+        android:src="@drawable/pfp"
+        android:text="+1(350)454-2345"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/date"
+        android:layout_width="411dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="64dp"
+        android:padding="15dp"
+        android:paddingStart="40dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp"
+        android:text="Nov 11"
+        android:textAlignment="center"
+        android:textColor="@color/black"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/encryptionNotice"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="124dp"
+        android:background="@drawable/encryption_message"
+        android:paddingStart="40dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="8dp"
+        android:text="Messages are end-to-end encrypted.\nNo one outside this chat, not even Talko Loco, can read or listen to them."
+        android:textAlignment="center"
+        android:textColor="@color/white"
+        android:textSize="14sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_margin="15dp"
+        android:contentDescription="@string/app_name"
+        android:src="@drawable/round_dehaze_24"
+        app:tint="@color/black"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="358dp"
+        tools:layout_editor_absoluteY="16dp" />
+
+    <ImageView
+        android:layout_width="44dp"
+        android:layout_height="37dp"
+        android:layout_margin="15dp"
+        android:contentDescription="@string/app_name"
+        android:src="@drawable/pfp"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="99dp"
+        tools:layout_editor_absoluteY="12dp" />
+
+    <TextView
+        android:id="@+id/messageSender"
+        android:layout_width="327dp"
+        android:layout_height="wrap_content"
+        android:background="@drawable/contact_chat"
+        android:hint="This is my outfit for later! I'm very Excited! "
+        android:inputType="textMultiLine"
+        android:padding="12dp"
+        android:scrollHorizontally="false"
+        android:textSize="16sp"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="60dp"
+        tools:layout_editor_absoluteY="230dp"/>
+
+    <TextView
+        android:id="@+id/messageReceiver"
+        android:layout_width="245dp"
+        android:layout_height="47dp"
+        android:background="@color/text_gray"
+        android:inputType="textMultiLine"
+        android:padding="12dp"
+        android:scrollHorizontally="false"
+        android:text="Dang! you look very pretty!! :)"
+        android:textColor="@color/white"
+        android:textSize="16sp"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteX="91dp"
+        tools:layout_editor_absoluteY="476dp" />
+
+    <ImageView
+        android:id="@+id/profileIcon2"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="12dp"
+        android:contentDescription="@string/profile_picture"
+        android:src="@drawable/pfp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.336" />
+
+    <!-- Input field for new messages -->
+
+    <ImageView
+        android:id="@+id/imageSuggestion"
+        android:layout_width="203dp"
+        android:layout_height="154dp"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:src="@drawable/imageAttatchment"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.298"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:ignore="MissingConstraints"
+        tools:layout_editor_absoluteY="276dp" />
+
+    <EditText
+        android:id="@+id/messageInput"
+        android:layout_width="405dp"
+        android:layout_height="34dp"
+        android:layout_marginBottom="4dp"
+        android:background="@drawable/edit_text_background"
+        android:hint="Type message..."
+        android:gravity="center"
+        android:inputType="text"
+        android:textSize="15sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <ImageView
+        android:id="@+id/attatchments"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="344dp"
+        android:contentDescription="@string/profile_picture"
+        android:src="@drawable/pfp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.696" />
+
+    <ImageView
+        android:id="@+id/camera"
+        android:layout_width="60dp"
+        android:layout_height="43dp"
+        android:background="#F5F5F5"
+        android:contentDescription="camera"
+        android:src="@drawable/baseline_camera_alt_24"
+        tools:layout_editor_absoluteX="352dp"
+        tools:layout_editor_absoluteY="693dp"
+        tools:ignore="MissingConstraints" />
+
+    <ImageView
+        android:layout_width="37dp"
+        android:layout_height="47dp"
+        android:src="@drawable/baseline_add_24"
+        tools:layout_editor_absoluteX="3dp"
+        tools:layout_editor_absoluteY="689dp"
+        tools:ignore="MissingConstraints" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
