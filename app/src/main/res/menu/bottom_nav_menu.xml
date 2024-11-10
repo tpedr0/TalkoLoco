@@ -3,7 +3,7 @@
 
     <item android:title="@string/communities"
         android:icon="@drawable/ic_communities"
-        android:id="communities"/>
+        android:id="@+id/communities"/>
     <item android:title="@string/chats"
         android:icon="@drawable/ic_chats"
         android:id="@+id/chats"/>
