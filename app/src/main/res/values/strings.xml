@@ -16,4 +16,6 @@
     <string name="yes">Yes</string>
     <string name="settings">Settings</string>
     <string name="current_phone_number">Current Phone Number</string>
+    <string name="communities">Communities</string>
+    <string name="startingMessage">Tap on [symbol] in the top right corner to start a new chat. You can chat with contacts who have TalkoLoco installed on thier phone.</string>
 </resources>
