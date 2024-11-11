@@ -9,4 +9,13 @@
         <item name="android:textSelectHandleRight">@color/primary_blue</item>
         <item name="android:textColorHighlight">#330055F0</item>
     </style>
+
+    <style name="Theme.Splash" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="android:windowBackground">@color/primary_blue</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowDisablePreview">true</item>
+    </style>
+
 </resources>
