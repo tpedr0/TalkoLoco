@@ -13,7 +13,7 @@ import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
 import com.example.talkoloco.models.User;
 
-public class ProfileCreation extends AppCompatActivity {
+public class ProfileCreationActivity extends AppCompatActivity {
     private ActivityProfileCreationBinding binding;
     private AuthController authController;
     private UserController userController;
@@ -66,7 +66,7 @@ public class ProfileCreation extends AppCompatActivity {
             updateUserProfile(newUser);
         }
 
-        Intent intent = new Intent(ProfileCreation.this, Home.class);
+        Intent intent = new Intent(ProfileCreationActivity.this, HomeActivity.class);
         // clears the back stack so user can't go back to auth flow
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

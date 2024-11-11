@@ -28,14 +28,14 @@
             android:theme="@style/Theme.TalkoLoco"/>
 
         <activity
-            android:name=".views.activities.Verification"
+            android:name=".views.activities.VerificationActivity"
             android:windowSoftInputMode="stateVisible|adjustResize" />
 
         <activity
-            android:name=".views.activities.ProfileCreation"
+            android:name=".views.activities.ProfileCreationActivity"
             android:windowSoftInputMode="adjustResize" />
 
-        <activity android:name=".views.activities.Home" />
+        <activity android:name=".views.activities.HomeActivity" />
     </application>
 
 </manifest>

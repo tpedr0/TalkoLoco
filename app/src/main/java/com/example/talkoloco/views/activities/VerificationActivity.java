@@ -20,7 +20,7 @@ import com.google.firebase.auth.PhoneAuthProvider;
 /**
  * the Verification class handles the phone number verification code input and verification process.
  */
-public class  Verification extends AppCompatActivity {
+public class  VerificationActivity extends AppCompatActivity {
     private EditText codeInput;
     private TextView instructionsText;
     private AuthController authController;
@@ -111,7 +111,7 @@ public class  Verification extends AppCompatActivity {
      */
     private void onVerificationSuccess() {
         // navigate to profile creation
-        Intent intent = new Intent(this, ProfileCreation.class);
+        Intent intent = new Intent(this, ProfileCreationActivity.class);
         startActivity(intent);
         finishAffinity(); // close all previous activities
     }

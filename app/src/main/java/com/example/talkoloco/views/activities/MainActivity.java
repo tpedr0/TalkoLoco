@@ -247,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
      * @param phoneNumber    the phone number being verified
      */
     private void handleCodeSent(String verificationId, String phoneNumber) {
-        Intent intent = new Intent(MainActivity.this, Verification.class);
+        Intent intent = new Intent(MainActivity.this, VerificationActivity.class);
         intent.putExtra("verificationId", verificationId);
         intent.putExtra("phoneNumber", phoneNumber);
         startActivity(intent);
@@ -257,7 +257,7 @@ public class MainActivity extends AppCompatActivity {
      * navigates to the ProfileCreation activity after successful phone number verification.
      */
     private void navigateToProfileCreation() {
-        Intent intent = new Intent(MainActivity.this, ProfileCreation.class);
+        Intent intent = new Intent(MainActivity.this, ProfileCreationActivity.class);
         startActivity(intent);
         finish();
     }
