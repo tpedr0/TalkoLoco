@@ -8,7 +8,6 @@ import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -17,6 +16,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.R;
+import com.example.talkoloco.databinding.ActivityMainBinding;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
@@ -29,8 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 // initializes initial phone number input and verification flow
 public class MainActivity extends AppCompatActivity {
-    private EditText phoneInput;
-    private Button nextButton;
+    private ActivityMainBinding binding;
     private boolean isFormatting;
     private String lastFormatted = "";
     private FirebaseAuth mAuth;
@@ -38,7 +37,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
         // initializes Firebase Auth
         mAuth = FirebaseAuth.getInstance();
@@ -49,25 +49,17 @@ public class MainActivity extends AppCompatActivity {
 
     // initializes the views and sets up phone number input field
     private void initializeViews() {
-        phoneInput = findViewById(R.id.phoneInput);
-        nextButton = findViewById(R.id.btnNext);
-
-        // set initial text with country code
-        phoneInput.setText("+1 ");
-        phoneInput.setSelection(phoneInput.length());
-
-        // initially disable next button
-        nextButton.setEnabled(false);
-
-        // add click listener
-        nextButton.setOnClickListener(v -> onNextButtonClick());
+        binding.phoneInput.setText("+1 ");
+        binding.phoneInput.setSelection(binding.phoneInput.length());
+        binding.btnNext.setEnabled(false);
+        binding.btnNext.setOnClickListener(v -> onNextButtonClick());
     }
 
     /**
      * handles the click event of the "Next" button, which shows a confirmation dialog.
      */
     private void onNextButtonClick() {
-        String phoneNumber = phoneInput.getText().toString();
+        String phoneNumber = binding.phoneInput.getText().toString();
         showConfirmationDialog(phoneNumber);
     }
 
@@ -75,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
      * sets up the phone number input field, including formatting the input and enabling/disabling the next button.
      */
     private void setupPhoneNumberInput() {
-        phoneInput.addTextChangedListener(new TextWatcher() {
+        binding.phoneInput.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
 
@@ -105,7 +97,7 @@ public class MainActivity extends AppCompatActivity {
                 // formats the number
                 StringBuilder formatted = new StringBuilder("+1 ");
                 if (numbers.length() > 1) {
-                    numbers = numbers.substring(1); // Remove the 1 from country code
+                    numbers = numbers.substring(1); // removes the 1 from country code
                     if (numbers.length() > 0) {
                         formatted.append("(");
                         formatted.append(numbers.substring(0, Math.min(3, numbers.length())));
@@ -128,12 +120,12 @@ public class MainActivity extends AppCompatActivity {
                 if (!formattedText.equals(lastFormatted)) {
                     lastFormatted = formattedText;
                     s.replace(0, s.length(), formattedText);
-                    phoneInput.setSelection(formattedText.length());
+                    binding.phoneInput.setSelection(formattedText.length());
                 }
 
                 // enable/disable next button based on phone number length
                 String digitsOnly = formattedText.replaceAll("\\D", "");
-                nextButton.setEnabled(digitsOnly.length() == 11);
+                binding.btnNext.setEnabled(digitsOnly.length() == 11);
 
                 isFormatting = false;
             }
@@ -180,7 +172,6 @@ public class MainActivity extends AppCompatActivity {
      * @param phoneNumber the phone number to be verified
      */
     private void startPhoneNumberVerification(String phoneNumber) {
-        // clean the phone number
         final String cleanNumber = phoneNumber.replaceAll("[^\\d+]", "").startsWith("+")
                 ? phoneNumber.replaceAll("[^\\d+]", "")
                 : "+" + phoneNumber.replaceAll("[^\\d]", "");
@@ -269,5 +260,11 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, ProfileCreation.class);
         startActivity(intent);
         finish();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        binding = null;
     }
 }
