@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MainActivity"
+    android:background="#F5F5F5">
+
+    <!-- First Change -->
+
+    <!-- Header Text -->
+    <TextView
+        android:id="@+id/titleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="50dp"
+        android:text="New chat"
+        android:textColor="#000"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_margin="16dp"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Subtitle Text -->
+    <TextView
+        android:id="@+id/subtitleTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="75dp"
+        android:layout_marginBottom="25dp"
+        android:text="Enter a phone number to start a new chat"
+        android:textColor="#888888"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/phoneNumberEditText"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_margin="8dp"
+        app:layout_constraintTop_toBottomOf="@id/titleTextView" />
+
+    <!-- Phone Number Input Field -->
+    <EditText
+        android:id="@+id/phoneNumberEditText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="100dp"
+        android:background="@android:color/darker_gray"
+        android:hint="+1(509)555-5555"
+        android:inputType="phone"
+        android:padding="12dp"
+        android:textColor="#000000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_margin="16dp"
+        app:layout_constraintTop_toBottomOf="@id/subtitleTextView"
+        app:layout_constraintWidth_percent="0.8" />
+
+    <!-- Start Chat Button -->
+    <Button
+        android:id="@+id/startChatButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:backgroundTint="#D3D3D3"
+        android:padding="12dp"
+        android:text="Start a chat"
+        android:textColor="#000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_margin="16dp"
+        app:layout_constraintTop_toBottomOf="@id/phoneNumberEditText"
+        app:layout_constraintWidth_percent="0.8" />
+
+    <!-- Numeric Keypad -->
+    <GridLayout
+        android:id="@+id/numericKeypad"
+        android:layout_width="315dp"
+        android:layout_height="260dp"
+        android:layout_marginTop="150dp"
+        android:layout_marginBottom="125dp"
+        android:columnCount="3"
+        android:rowCount="4"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.58"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/startChatButton"
+        app:layout_constraintWidth_percent="0.8">
+
+        <!-- Number Buttons -->
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="0"
+            android:insetLeft="0dp"
+            android:text="5\nJKL" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="0"
+            android:layout_column="0"
+            android:insetLeft="0dp"
+            android:text="5\nJKL" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="0"
+            android:layout_column="0"
+            android:text="1" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="0"
+
+            android:text="2\nABC" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3\nDEF" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="4\nGHI" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:insetLeft="0dp"
+            android:text="5\nJKL" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="6\nMNO" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="7\nPQRS" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="8\nTUV" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="0"
+
+            android:text="9\nWXYZ" />
+
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="3"
+            android:layout_column="1"
+            android:text="0" />
+
+        <View
+            android:layout_width="85dp"
+            android:layout_height="48dp"
+            android:layout_row="1" />
+
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_row="2"
+
+
+            android:text="⌫"
+            android:textColor="#FF0000" />
+
+    </GridLayout>
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cancel"
+        tools:layout_editor_absoluteX="304dp"
+        tools:layout_editor_absoluteY="95dp" />
+
+
+</androidx.constraintlayout.widget.ConstraintLayout>
