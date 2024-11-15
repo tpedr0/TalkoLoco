@@ -12,7 +12,7 @@ import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
 import com.example.talkoloco.models.User;
-import com.google.android.ads.mediationtestsuite.activities.HomeActivity;
+import com.example.talkoloco.views.activities.HomeActivity;
 
 public class ProfileCreationActivity extends AppCompatActivity {
     private ActivityProfileCreationBinding binding;
