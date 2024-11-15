@@ -42,7 +42,8 @@
             android:name=".views.activities.CommunitiesActivity"
             android:exported="false"/>
 
-       <!-- <activity android:name=".views.activities.HomeActivity" /> -->
+       <activity android:name=".views.activities.HomeActivity"
+           android:exported="false"/>
     </application>
 
 </manifest>
