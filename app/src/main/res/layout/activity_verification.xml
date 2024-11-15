@@ -51,7 +51,7 @@
         android:layout_height="wrap_content"
         android:minWidth="200dp"
         android:background="@null"
-        android:inputType="number"
+        android:inputType="phone"
         android:maxLength="6"
         android:textSize="32sp"
         android:gravity="center"

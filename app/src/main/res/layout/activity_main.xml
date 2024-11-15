@@ -35,6 +35,7 @@
         android:id="@+id/phoneInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:autofillHints=""
         android:hint="@string/your_phone_number"
         android:inputType="phone"
         android:background="@drawable/edit_text_background"
@@ -50,7 +51,7 @@
     <Button
         android:id="@+id/btnNext"
         android:layout_width="wrap_content"
-        android:layout_height="40dp"
+        android:layout_height="48dp"
         android:text="@string/next"
         android:textAllCaps="false"
         android:textSize="12sp"
