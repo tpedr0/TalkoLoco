@@ -44,6 +44,9 @@
 
        <activity android:name=".views.activities.HomeActivity"
            android:exported="false"/>
+
+        <activity android:name=".views.activities.SettingsActivity"
+            android:exported="false"/>
     </application>
 
 </manifest>

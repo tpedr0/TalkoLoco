@@ -21,11 +21,11 @@ public class HomeActivity extends AppCompatActivity {
             int id = item.getItemId();
 
             if (id == R.id.chats) {
-                startActivity(new Intent(this, MainActivity.class));
+                startActivity(new Intent(this, HomeActivity.class));
             } else if (id == R.id.communities) {
                 startActivity(new Intent(this, CommunitiesActivity.class));
             } else if (id == R.id.settings) {
-                startActivity(new Intent(this, ProfileCreationActivity.class));
+                startActivity(new Intent(this, SettingsActivity.class));
             }
             return true;
         });

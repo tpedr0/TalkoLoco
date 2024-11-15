@@ -6,15 +6,15 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.R;
-import com.example.talkoloco.databinding.ActivityCommunitiesBinding;
+import com.example.talkoloco.databinding.ActivitySettingsBinding;
 
-public class CommunitiesActivity extends AppCompatActivity {
-    private ActivityCommunitiesBinding binding;
+public class SettingsActivity extends AppCompatActivity {
+    private ActivitySettingsBinding binding;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        binding = ActivityCommunitiesBinding.inflate(getLayoutInflater());
+        binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
