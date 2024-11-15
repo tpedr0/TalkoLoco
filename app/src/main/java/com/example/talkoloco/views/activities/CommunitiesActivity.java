@@ -2,19 +2,19 @@ package com.example.talkoloco.views.activities;
 
 import android.content.Intent;
 import android.os.Bundle;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.R;
-import com.example.talkoloco.databinding.ActivityHomeBinding ;
+import com.example.talkoloco.databinding.ActivityCommunitiesBinding;
 
-
-public class HomeActivity extends AppCompatActivity {
-    private ActivityHomeBinding  binding;
-
+public class CommunitiesActivity extends AppCompatActivity {
+    private ActivityCommunitiesBinding binding;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding = ActivityHomeBinding.inflate(getLayoutInflater());
+
+        binding = ActivityCommunitiesBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
@@ -29,11 +29,5 @@ public class HomeActivity extends AppCompatActivity {
             }
             return true;
         });
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        binding = null;
     }
 }

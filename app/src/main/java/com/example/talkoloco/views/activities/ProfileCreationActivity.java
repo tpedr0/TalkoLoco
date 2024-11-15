@@ -12,7 +12,7 @@ import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
 import com.example.talkoloco.models.User;
-import com.google.android.ads.mediationtestsuite.activities.HomeActivity;
+import com.example.talkoloco.views.activities.HomeActivity;
 
 public class ProfileCreationActivity extends AppCompatActivity {
     private ActivityProfileCreationBinding binding;
@@ -67,7 +67,7 @@ public class ProfileCreationActivity extends AppCompatActivity {
             updateUserProfile(newUser);
         }
 
-        Intent intent = new Intent(ProfileCreationActivity.this, VerificationActivity.class);
+        Intent intent = new Intent(ProfileCreationActivity.this, HomeActivity.class);
         // clears the back stack so user can't go back to auth flow
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
