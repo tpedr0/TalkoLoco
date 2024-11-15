@@ -1,5 +1,6 @@
 package com.example.talkoloco.views.activities;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -17,16 +18,15 @@ public class CommunitiesActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         binding.bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
 
-            switch (item.getItemId()){
-                case R.id.chats:
-                    break;
-                case R.id.communities:
-                    break;
-                case R.id.settings:
-                    break;
+            if (id == R.id.chats) {
+                startActivity(new Intent(this, MainActivity.class));
+            } else if (id == R.id.communities) {
+                startActivity(new Intent(this, CommunitiesActivity.class));
+            } else if (id == R.id.settings) {
+                startActivity(new Intent(this, ProfileCreationActivity.class));
             }
-
             return true;
         });
     }

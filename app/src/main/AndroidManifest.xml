@@ -36,7 +36,11 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name=".views.activities.actDropDownSettings"
-            android:exported="true"/>
+            android:exported="false"/>
+
+        <activity
+            android:name=".views.activities.CommunitiesActivity"
+            android:exported="false"/>
 
        <!-- <activity android:name=".views.activities.HomeActivity" /> -->
     </application>
