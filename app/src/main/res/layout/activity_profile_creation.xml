@@ -65,6 +65,7 @@
         android:id="@+id/nameInput"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:autofillHints=""
         android:hint="@string/your_name"
         android:inputType="textPersonName"
         android:background="@drawable/edit_text_background"
