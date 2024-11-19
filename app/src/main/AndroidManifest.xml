@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET"/>
+
 
     <application
         android:allowBackup="true"
@@ -35,18 +37,29 @@
             android:name=".views.activities.ProfileCreationActivity"
             android:windowSoftInputMode="adjustResize" />
 
-        <activity android:name=".views.activities.actDropDownSettings"
+        <activity
+            android:name=".views.activities.actDropDownSettings"
             android:exported="false"/>
 
         <activity
             android:name=".views.activities.CommunitiesActivity"
             android:exported="false"/>
 
-       <activity android:name=".views.activities.HomeActivity"
-           android:exported="false"/>
-
-        <activity android:name=".views.activities.SettingsActivity"
+        <activity
+            android:name=".views.activities.HomeActivity"
             android:exported="false"/>
+
+        <activity
+            android:name=".views.activities.SettingsActivity"
+            android:exported="false"/>
+
+        <service
+            android:name=".firebase.MessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT"/>
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

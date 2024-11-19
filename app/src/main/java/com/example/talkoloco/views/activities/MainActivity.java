@@ -17,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.R;
 import com.example.talkoloco.databinding.ActivityMainBinding;
+import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
@@ -24,6 +25,7 @@ import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.FirebaseTooManyRequestsException;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.concurrent.TimeUnit;
 
@@ -38,10 +40,14 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
+
+        FirebaseFirestore.setLoggingEnabled(true);
+        FirebaseApp.initializeApp(this);
         setContentView(binding.getRoot());
 
         // initializes Firebase Auth
         mAuth = FirebaseAuth.getInstance();
+        FirebaseAuth.getInstance().setLanguageCode("en");
 
         initializeViews();
         setupPhoneNumberInput();
@@ -54,6 +60,7 @@ public class MainActivity extends AppCompatActivity {
         binding.btnNext.setEnabled(false);
         binding.btnNext.setOnClickListener(v -> onNextButtonClick());
     }
+
 
     /**
      * handles the click event of the "Next" button, which shows a confirmation dialog.
@@ -211,10 +218,36 @@ public class MainActivity extends AppCompatActivity {
      * @param credential the phone auth credential used for sign-in
      */
     private void handleVerificationCompleted(PhoneAuthCredential credential) {
+        String phoneNumber = binding.phoneInput.getText().toString();
+        final String cleanNumber = phoneNumber.replaceAll("[^\\d+]", "").startsWith("+")
+                ? phoneNumber.replaceAll("[^\\d+]", "")
+                : "+" + phoneNumber.replaceAll("[^\\d]", "");
+
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        navigateToProfileCreation();
+                        // Check if user exists in Firestore
+                        String userId = mAuth.getCurrentUser().getUid();
+                        FirebaseFirestore.getInstance()
+                                .collection("users")
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    if (documentSnapshot.exists()) {
+                                        // Existing user, go to Home
+                                        startActivity(new Intent(MainActivity.this, HomeActivity.class));
+                                    } else {
+                                        // New user, go to Profile Creation
+                                        navigateToProfileCreation();
+                                    }
+                                    finish();
+                                })
+                                .addOnFailureListener(e -> {
+                                    // Error checking user, default to Profile Creation
+                                    Log.e("MainActivity", "Error checking user existence", e);
+                                    navigateToProfileCreation();
+                                    finish();
+                                });
                     } else {
                         String message = "Authentication failed";
                         if (task.getException() instanceof FirebaseAuthInvalidCredentialsException) {

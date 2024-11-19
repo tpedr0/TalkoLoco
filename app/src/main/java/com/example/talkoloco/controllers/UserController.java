@@ -6,10 +6,11 @@ import com.example.talkoloco.models.User;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
-/**
- * the UserController class is a singleton controller that manages the user-related operations in the Firestore database.
- */
+import java.util.HashMap;
+import java.util.Map;
+
 public class UserController {
     private final FirebaseFirestore db;
     private static UserController instance;
@@ -26,28 +27,23 @@ public class UserController {
         }
         return instance;
     }
-    /**
-     * saves the user data to the Firestore database.
-     *
-     * @param user              the user object to be saved
-     * @param onSuccessListener the listener for the successful save operation
-     * @param onFailureListener the listener for the failed save operation
-     */
-    public void saveUser(User user, OnSuccessListener<Void> onSuccessListener,
-                         OnFailureListener onFailureListener) {
+
+
+
+    public void saveUser(User user, OnSuccessListener<Void> onSuccessListener, OnFailureListener onFailureListener) {
         if (user.getUserId() == null) {
-            Log.e(TAG, "Cannot save user: userId is null");
+            Log.e(TAG, "User ID is null");
             onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null"));
             return;
         }
 
-        Log.d(TAG, "Saving user with ID: " + user.getUserId());
+        Log.d(TAG, "Attempting to save user: " + user.getUserId());
 
         db.collection(USERS_COLLECTION)
                 .document(user.getUserId())
                 .set(user)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "User successfully saved");
+                    Log.d(TAG, "User saved successfully");
                     onSuccessListener.onSuccess(aVoid);
                 })
                 .addOnFailureListener(e -> {
@@ -56,26 +52,18 @@ public class UserController {
                 });
     }
 
-    /**
-     * updates the user's name and profile picture URL in the Firestore database.
-     *
-     * @param userId                the ID of the user to be updated
-     * @param name                  the new name of the user
-     * @param profilePictureUrl     the new profile picture URL of the user
-     * @param onSuccessListener     the listener for the successful update operation
-     * @param onFailureListener     the listener for the failed update operation
-     */
     public void updateUserProfile(String userId, String name, String profilePictureUrl,
                                   OnSuccessListener<Void> onSuccessListener,
                                   OnFailureListener onFailureListener) {
         Log.d(TAG, "Updating profile for user: " + userId);
 
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("name", name);
+        updates.put("profilePictureUrl", profilePictureUrl);  // Can be null to remove profile picture
+
         db.collection(USERS_COLLECTION)
                 .document(userId)
-                .update(
-                        "name", name,
-                        "profilePictureUrl", profilePictureUrl
-                )
+                .set(updates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "User profile successfully updated");
                     onSuccessListener.onSuccess(aVoid);
@@ -86,13 +74,41 @@ public class UserController {
                 });
     }
 
-    /**
-     * retrieves the user data from the Firestore database by the user ID.
-     *
-     * @param userId               the ID of the user to be retrieved
-     * @param onSuccessListener    the listener for the successful retrieve operation
-     * @param onFailureListener    the listener for the failed retrieve operation
-     */
+    public void updateFields(String userId, Map<String, Object> updates,
+                             OnSuccessListener<Void> onSuccessListener,
+                             OnFailureListener onFailureListener) {
+        if (userId == null) {
+            onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null"));
+            return;
+        }
+
+        Log.d(TAG, "Updating fields for user: " + userId);
+
+        db.collection(USERS_COLLECTION)
+                .document(userId)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User fields successfully updated");
+                    onSuccessListener.onSuccess(aVoid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error updating user fields", e);
+                    onFailureListener.onFailure(e);
+                });
+    }
+
+    public void updateLastLogin(String userId, OnSuccessListener<Void> onSuccessListener,
+                                OnFailureListener onFailureListener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("lastLoginAt", System.currentTimeMillis());
+
+        db.collection(USERS_COLLECTION)
+                .document(userId)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(onSuccessListener)
+                .addOnFailureListener(onFailureListener);
+    }
+
     public void getUserById(String userId, OnSuccessListener<User> onSuccessListener,
                             OnFailureListener onFailureListener) {
         Log.d(TAG, "Fetching user with ID: " + userId);
@@ -116,37 +132,6 @@ public class UserController {
                 });
     }
 
-    /**
-     * deletes the user data from the Firestore database.
-     *
-     * @param userId               the ID of the user to be deleted
-     * @param onSuccessListener    the listener for the successful delete operation
-     * @param onFailureListener    the listener for the failed delete operation
-     */
-    public void deleteUser(String userId, OnSuccessListener<Void> onSuccessListener,
-                           OnFailureListener onFailureListener) {
-        Log.d(TAG, "Deleting user with ID: " + userId);
-
-        db.collection(USERS_COLLECTION)
-                .document(userId)
-                .delete()
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "User successfully deleted");
-                    onSuccessListener.onSuccess(aVoid);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error deleting user", e);
-                    onFailureListener.onFailure(e);
-                });
-    }
-
-    /**
-     * checks if a user with the given ID exists in the Firestore database.
-     *
-     * @param userId               the ID of the user to be checked
-     * @param onSuccessListener    the listener for the successful check operation
-     * @param onFailureListener    the listener for the failed check operation
-     */
     public void checkIfUserExists(String userId, OnSuccessListener<Boolean> onSuccessListener,
                                   OnFailureListener onFailureListener) {
         Log.d(TAG, "Checking if user exists: " + userId);
@@ -161,6 +146,23 @@ public class UserController {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error checking if user exists", e);
+                    onFailureListener.onFailure(e);
+                });
+    }
+
+    public void deleteUser(String userId, OnSuccessListener<Void> onSuccessListener,
+                           OnFailureListener onFailureListener) {
+        Log.d(TAG, "Deleting user with ID: " + userId);
+
+        db.collection(USERS_COLLECTION)
+                .document(userId)
+                .delete()
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User successfully deleted");
+                    onSuccessListener.onSuccess(aVoid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error deleting user", e);
                     onFailureListener.onFailure(e);
                 });
     }

@@ -1,23 +1,42 @@
 package com.example.talkoloco.views.activities;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
 import com.example.talkoloco.models.User;
-import com.example.talkoloco.views.activities.HomeActivity;
+import com.example.talkoloco.utils.ImageHandler;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
 
 public class ProfileCreationActivity extends AppCompatActivity {
     private ActivityProfileCreationBinding binding;
     private AuthController authController;
     private UserController userController;
+    private Uri selectedImageUri;
+
+    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    selectedImageUri = result.getData().getData();
+                    binding.profileIcon.setImageURI(selectedImageUri);
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -30,14 +49,19 @@ public class ProfileCreationActivity extends AppCompatActivity {
 
         initializeViews();
         setupNameInput();
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("test").add(new HashMap<String, Object>())
+                .addOnSuccessListener(ref -> Log.d("Firebase", "Write successful"))
+                .addOnFailureListener(e -> Log.e("Firebase", "Write failed", e));
     }
 
     private void initializeViews() {
-        // now uses binding instead of findViewById
         binding.doneButton.setEnabled(false);
         binding.doneButton.setOnClickListener(v -> onDoneClick());
         binding.profileIcon.setOnClickListener(v -> onProfileIconClick());
     }
+
 
     private void setupNameInput() {
         binding.nameInput.addTextChangedListener(new TextWatcher() {
@@ -59,36 +83,52 @@ public class ProfileCreationActivity extends AppCompatActivity {
         String userId = authController.getCurrentUserId();
 
         if (userId != null && !name.isEmpty()) {
-            // creates new user directly
             User newUser = new User();
             newUser.setUserId(userId);
             newUser.setName(name);
 
+            if (selectedImageUri != null) {
+                try {
+                    String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
+                    if (ImageHandler.isImageSizeValid(encodedImage)) {
+                        newUser.setProfilePictureUrl(encodedImage);
+                    } else {
+                        Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
             updateUserProfile(newUser);
+            navigateToHome();
         }
-
-        Intent intent = new Intent(ProfileCreationActivity.this, HomeActivity.class);
-        // clears the back stack so user can't go back to auth flow
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-        startActivity(intent);
-        finish();
-
     }
 
     private void updateUserProfile(User user) {
         userController.saveUser(user,
                 aVoid -> {
-                    // Change this part
                     Toast.makeText(this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
-                    // Navigate to Home instead of just finishing
+                    navigateToHome();
                 },
-                e -> Toast.makeText(this,
-                        "Error updating profile", Toast.LENGTH_SHORT).show()
+                e -> Toast.makeText(this, "Error updating profile: " + e.getMessage(),
+                        Toast.LENGTH_SHORT).show()
         );
     }
 
     private void onProfileIconClick() {
-        Toast.makeText(this, "Profile picture selection coming soon", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        imagePickerLauncher.launch(intent);
+    }
+
+    private void navigateToHome() {
+        Intent intent = new Intent(this, HomeActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
     }
 
     @Override

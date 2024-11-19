@@ -7,6 +7,8 @@ public class User {
     private String userId;
     private long createdAt;
     private long lastLoginAt;
+    private String status;
+
 
     /**
      * constructs a new User instance with the required empty constructor for Firebase.
@@ -151,4 +153,9 @@ public class User {
     public boolean isProfileComplete() {
         return name != null && !name.trim().isEmpty();
     }
+    public String getStatus() {
+        return status;
+    }
+
 }
+
