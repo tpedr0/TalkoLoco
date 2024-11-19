@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "208255682133",
+    "project_id": "talkoloco-27ce7",
+    "storage_bucket": "talkoloco-27ce7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:208255682133:android:ed14349dba3a66dbf9f6dc",
+        "android_client_info": {
+          "package_name": "com.example.talkoloco"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD4HpJWYX2SdWjIc2lho1ywfi4zJvciOuE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
