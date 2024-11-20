@@ -5,11 +5,14 @@ import android.os.Bundle;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.R;
+import com.example.talkoloco.controllers.NavigationController;
 import com.example.talkoloco.databinding.ActivityHomeBinding ;
 
 
 public class HomeActivity extends AppCompatActivity {
     private ActivityHomeBinding  binding;
+
+    private NavigationController navigationController;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -17,18 +20,8 @@ public class HomeActivity extends AppCompatActivity {
         binding = ActivityHomeBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        binding.bottomNavigationView.setOnItemSelectedListener(item -> {
-            int id = item.getItemId();
-
-            if (id == R.id.chats) {
-                startActivity(new Intent(this, HomeActivity.class));
-            } else if (id == R.id.communities) {
-                startActivity(new Intent(this, CommunitiesActivity.class));
-            } else if (id == R.id.settings) {
-                startActivity(new Intent(this, SettingsActivity.class));
-            }
-            return true;
-        });
+        navigationController = new NavigationController(this);
+        navigationController.setupNavigation(binding.bottomNavigationView);
     }
 
     @Override
