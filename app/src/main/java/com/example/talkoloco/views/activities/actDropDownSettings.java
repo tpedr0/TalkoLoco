@@ -19,30 +19,30 @@ public class actDropDownSettings extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
 
-        // Initialize dropdown options
+        // initialize dropdown menu
         dropDownOptions = new ArrayList<>();
-        dropDownOptions.add("WhatsApp is buttcheeks compared to this!");
+        dropDownOptions.add("WhatsApp is inferior compared to this!");
         dropDownOptions.add("Feeling happy :D");
         dropDownOptions.add("Busy.");
         dropDownOptions.add("Away.");
         dropDownOptions.add("Do not Disturb");
 
-        // Initialize the adapter with the context, layout, and options
+        // initialize the adapter with the context, layout, and options
         adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, dropDownOptions);
 
 
-        // Reference the AutoCompleteTextView and set the adapter
+        // reference the AutoCompleteTextView and set the adapter
         AutoCompleteTextView dropdown = findViewById(R.id.dropdown);
         dropdown = findViewById(R.id.dropdown);
         dropdown.setText("WhatsApp is buttcheeks compared to this!");
         dropdown.setAdapter(adapter);
     }
 
-    // Method to add a new item to the dropdown list
+    //  add a new item to the dropdown list
     private void addItemToDropdown(String item) {
-        if (!dropDownOptions.contains(item)) { // Avoid duplicates
-            dropDownOptions.add(item);         // Add to ArrayList
-            adapter.notifyDataSetChanged();    // Notify adapter of data change
+        if (!dropDownOptions.contains(item)) { // avoid duplicates
+            dropDownOptions.add(item);         // add to ArrayList
+            adapter.notifyDataSetChanged();    // notify adapter of data change
         }
     }
 }

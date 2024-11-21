@@ -34,15 +34,16 @@ public class HomeActivity extends AppCompatActivity {
         binding = ActivityHomeBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Initialize controllers
+
+        // initialize controllers
         navigationController = new NavigationController(this);
         authController = AuthController.getInstance();
         userController = UserController.getInstance();
 
-        // Setup navigation
+        // setup navigation
         navigationController.setupNavigation(binding.bottomNavigationView);
 
-        // Setup click listeners for new chat
+        // setup click listeners for new chat
         binding.addChatIcon.setOnClickListener(v -> showNewChatDialog());
         binding.startMessaging.setOnClickListener(v -> showNewChatDialog());
     }
@@ -56,10 +57,10 @@ public class HomeActivity extends AppCompatActivity {
         Button startChatButton = dialogView.findViewById(R.id.startChatButton);
         TextView cancelButton = dialogView.findViewById(R.id.cancelButton);
 
-        // Disable the start chat button initially
+        // disable the start chat button initially
         startChatButton.setEnabled(false);
 
-        // Setup phone number formatting
+        // setup phone number formatting
         phoneInput.addTextChangedListener(new TextWatcher() {
             private boolean isFormatting;
             private String lastFormatted = "";
@@ -79,7 +80,7 @@ public class HomeActivity extends AppCompatActivity {
                 String input = s.toString();
                 String digits = input.replaceAll("[^\\d]", "");
 
-                // Ensure we start with country code
+                // ensure we start with country code
                 if (!digits.startsWith("1")) {
                     digits = "1" + digits;
                 }
@@ -89,7 +90,7 @@ public class HomeActivity extends AppCompatActivity {
                     digits = digits.substring(0, 11);
                 }
 
-                // Format the number
+                // format the number
                 StringBuilder formatted = new StringBuilder("+1 ");
                 if (digits.length() > 1) {
                     String remaining = digits.substring(1); // Remove country code
@@ -112,11 +113,11 @@ public class HomeActivity extends AppCompatActivity {
                     s.replace(0, s.length(), formattedText);
                 }
 
-                // Enable button only if we have a complete number (exactly 11 digits)
+                // enable button only if we have a complete number (exactly 11 digits)
                 boolean isComplete = digits.length() == 11;
                 startChatButton.setEnabled(isComplete);
 
-                // Show error only if we have an incomplete number (more than just +1)
+                // show error only if we have an incomplete number (more than just +1)
                 if (digits.length() > 1 && !isComplete) {
                     phoneInput.setError("Enter a complete phone number");
                 } else {
@@ -127,7 +128,7 @@ public class HomeActivity extends AppCompatActivity {
             }
         });
 
-        // Setup button clicks
+        // setup button clicks
         startChatButton.setOnClickListener(v -> {
             String phoneNumber = phoneInput.getText().toString();
             String digits = phoneNumber.replaceAll("[^\\d]", "");
@@ -139,7 +140,7 @@ public class HomeActivity extends AppCompatActivity {
 
         cancelButton.setOnClickListener(v -> dialog.dismiss());
 
-        // Show dialog
+        // show dialog
         if (dialog.getWindow() != null) {
             dialog.getWindow().setLayout(
                     ViewGroup.LayoutParams.MATCH_PARENT,
@@ -150,7 +151,7 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void startNewChat(String phoneNumber) {
-        // Strip formatting before checking user existence
+        // strip formatting before checking user existence
         String cleanPhoneNumber = PhoneNumberFormatter.stripFormatting(phoneNumber);
 
         userController.checkIfUserExists(cleanPhoneNumber,
@@ -172,9 +173,9 @@ public class HomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        // Check if user is signed in
+        // check if user is signed in
         if (!authController.isUserSignedIn()) {
-            // Navigate to MainActivity if not signed in
+            // navigate to MainActivity if not signed in
             startActivity(new Intent(this, MainActivity.class));
             finish();
         }

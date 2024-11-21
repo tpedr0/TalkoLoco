@@ -1,7 +1,22 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.TalkoLoco" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+<resources>
+    <style name="Theme.TalkoLoco" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/primary_blue</item>
+        <item name="android:statusBarColor">@color/android_gray</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@color/android_gray</item>
+        <item name="android:textSelectHandle">@color/primary_blue</item>
+        <item name="android:textSelectHandleLeft">@color/primary_blue</item>
+        <item name="android:textSelectHandleRight">@color/primary_blue</item>
+        <item name="android:textColorHighlight">#330055F0</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="cardBackgroundColor">@color/darker_gray</item>
+    </style>
+
+    <style name="Theme.Splash" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@color/primary_blue</item>
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowDisablePreview">true</item>
     </style>
 </resources>

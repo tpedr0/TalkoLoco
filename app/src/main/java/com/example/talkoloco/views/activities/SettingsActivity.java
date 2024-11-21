@@ -17,6 +17,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 import android.view.MotionEvent;
@@ -35,6 +36,7 @@ import com.example.talkoloco.models.User;
 import com.example.talkoloco.models.UserStatus;
 import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.ImageHandler;
+import com.example.talkoloco.utils.ThemeManager;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.PhoneAuthCredential;
@@ -57,6 +59,7 @@ public class SettingsActivity extends AppCompatActivity {
     private static final String TAG = "SettingsActivity";
     private static final int VERIFY_PHONE_REQUEST = 100;
     private static final int DRAWABLE_RIGHT = 2;
+    private ThemeManager themeManager;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -73,6 +76,7 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivitySettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+        themeManager = ThemeManager.getInstance(this);
 
         // Initialize controllers
         navigationController = new NavigationController(this);
@@ -82,11 +86,15 @@ public class SettingsActivity extends AppCompatActivity {
         // Setup navigation
         navigationController.setupNavigation(binding.bottomNavigationView);
 
+
         // Setup features
         setupDeleteButton();
         setupNameEditing();
         setupPhoneEditing();
         setupStatusDropdown();
+        setupDarkMode();
+        setupSignOutButton();
+
 
         // Setup profile picture click
         binding.profileIcon.setOnClickListener(v -> showProfilePictureOptions());
@@ -94,6 +102,22 @@ public class SettingsActivity extends AppCompatActivity {
         // Load user data
         loadUserData();
     }
+
+    private void setupDarkMode() {
+        // Update button icon based on current mode
+        binding.darkModeButton.setImageResource(
+                themeManager.isDarkMode() ? R.drawable.ic_light_mode : R.drawable.ic_dark_mode
+        );
+
+        // Add click listener for toggling dark mode
+        binding.darkModeButton.setOnClickListener(v -> {
+            boolean newDarkMode = !themeManager.isDarkMode(); // Toggle the current mode
+            themeManager.setDarkMode(newDarkMode);           // Save preference
+            themeManager.apply();                            // Apply theme globally
+            recreate();                                      // Restart the activity to reflect changes
+        });
+    }
+
 
     private void setupStatusDropdown() {
         // Initialize adapter with all statuses
@@ -672,5 +696,19 @@ public class SettingsActivity extends AppCompatActivity {
         if (imm != null) {
             imm.hideSoftInputFromWindow(binding.nameInput.getWindowToken(), 0);
         }
+    }
+
+    private void setupSignOutButton() {
+        Button signOutButton = binding.signOutButton;
+        signOutButton.setOnClickListener(v -> {
+            authController.signOut();
+            showLogoutToast();
+            startActivity(new Intent(SettingsActivity.this, MainActivity.class));
+            finish();
+        });
+    }
+
+    private void showLogoutToast() {
+        Toast.makeText(SettingsActivity.this, "Successfully logged out", Toast.LENGTH_SHORT).show();
     }
 }

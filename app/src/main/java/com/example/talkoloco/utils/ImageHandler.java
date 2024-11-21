@@ -17,7 +17,7 @@ public class ImageHandler {
     private static final int COMPRESSION_QUALITY = 75;
 
     /**
-     * Processes and encodes an image URI to a Base64 string
+     * processes and encodes an image URI to a Base64 string
      */
     public static String encodeImage(Context context, Uri imageUri) throws IOException {
         InputStream inputStream = context.getContentResolver().openInputStream(imageUri);
@@ -40,7 +40,7 @@ public class ImageHandler {
     }
 
     /**
-     * Scales down the bitmap if it exceeds maximum dimensions
+     * scales down the bitmap if it exceeds maximum dimensions
      */
     private static Bitmap scaleBitmap(Bitmap original) {
         int width = original.getWidth();
@@ -62,7 +62,7 @@ public class ImageHandler {
     }
 
     /**
-     * Decodes a Base64 string back to a Bitmap
+     * decodes a Base64 string back to a Bitmap
      */
     public static Bitmap decodeImage(String base64String) {
         try {
@@ -75,7 +75,7 @@ public class ImageHandler {
     }
 
     /**
-     * Validates if the image size is within acceptable limits
+     * validates if the image size is within acceptable limits
      */
     public static boolean isImageSizeValid(String base64String) {
         // Checking if encoded image is less than 1MB
