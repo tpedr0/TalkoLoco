@@ -13,19 +13,14 @@ import com.example.talkoloco.R;
 import com.example.talkoloco.controllers.AuthController;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
-// import com.google.firebase.FirebaseTooManyRequestsException;
-// import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
-// import com.google.firebase.auth.FirebaseAuthSettings;
 
-/**
- * the Verification class handles the phone number verification code input and verification process.
- */
-public class  VerificationActivity extends AppCompatActivity {
+public class VerificationActivity extends AppCompatActivity {
     private EditText codeInput;
     private TextView instructionsText;
     private AuthController authController;
     private String verificationId;
     private String phoneNumber;
+    private boolean isUpdating;
     private static final String TAG = "VerificationActivity";
 
     @Override
@@ -35,39 +30,34 @@ public class  VerificationActivity extends AppCompatActivity {
 
         authController = AuthController.getInstance();
 
-        // get verification ID and phone number from intent
+        // Get verification ID and phone number from intent
         verificationId = getIntent().getStringExtra("verificationId");
         phoneNumber = getIntent().getStringExtra("phoneNumber");
+        isUpdating = getIntent().getBooleanExtra("isUpdating", false);
 
         initializeViews();
         setupCodeInput();
         setupInstructions();
     }
 
-    /**
-     * initializes the views and sets up the event listeners.
-     */
     private void initializeViews() {
         codeInput = findViewById(R.id.codeInput);
         TextView backButton = findViewById(R.id.backButton);
         instructionsText = findViewById(R.id.instructionsText);
         TextView resendButton = findViewById(R.id.resendButton);
 
-        backButton.setOnClickListener(v -> finish());
+        backButton.setOnClickListener(v -> {
+            setResult(RESULT_CANCELED);
+            finish();
+        });
         resendButton.setOnClickListener(v -> onResendClick());
     }
 
-    /**
-     * sets up the instructions text based on the user's phone number.
-     */
     private void setupInstructions() {
         String instructions = getString(R.string.verify_instructions, phoneNumber);
         instructionsText.setText(instructions);
     }
 
-    /**
-     * sets up the code input field and handles the input using a TextWatcher.
-     */
     private void setupCodeInput() {
         codeInput.requestFocus();
         codeInput.addTextChangedListener(new TextWatcher() {
@@ -86,11 +76,6 @@ public class  VerificationActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * verifies the entered code using the Firebase Authentication API.
-     *
-     * @param code the verification code entered by the user
-     */
     private void verifyCode(String code) {
         Log.d(TAG, "Attempting to verify code");
 
@@ -106,29 +91,29 @@ public class  VerificationActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * handles the successful verification of the phone number.
-     */
     private void onVerificationSuccess() {
-        // navigate to profile creation
-        Intent intent = new Intent(this, ProfileCreationActivity.class);
-        startActivity(intent);
-        finishAffinity(); // close all previous activities
+        if (isUpdating) {
+            // Return to Settings with success result and the new phone number
+            Intent resultIntent = new Intent();
+            resultIntent.putExtra("phoneNumber", phoneNumber);
+            setResult(RESULT_OK, resultIntent);
+            finish();
+        } else {
+            // Original flow for new user registration
+            Intent intent = new Intent(this, ProfileCreationActivity.class);
+            startActivity(intent);
+            finishAffinity();
+        }
     }
 
-    /**
-     * handles the failure of the phone number verification.
-     */
+
     private void onVerificationFailed() {
         Toast.makeText(this, "Invalid code. Please try again.", Toast.LENGTH_SHORT).show();
         codeInput.setText("");
     }
 
-    /**
-     * handles the click event of the "Resend" button, which is a placeholder for the resend code functionality.
-     */
     private void onResendClick() {
-        // TO-DO: implement resend logic here
+        // TODO: implement resend logic here
         Toast.makeText(this, "Resending code...", Toast.LENGTH_SHORT).show();
         // call AuthController here to resend the code
     }

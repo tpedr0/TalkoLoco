@@ -57,9 +57,12 @@
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
         android:background="@drawable/edit_text_background"
-        android:hint="+1(555)555-5555"
+        android:hint="+1 (555) 555-5555"
         android:inputType="phone"
+        android:maxLength="17"
         android:padding="16dp"
+        android:importantForAutofill="no"
+        android:imeOptions="actionDone"
         app:layout_constraintTop_toBottomOf="@id/instructionText"/>
 
     <Button

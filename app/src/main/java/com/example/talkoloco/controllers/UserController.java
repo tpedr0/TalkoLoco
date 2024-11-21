@@ -3,6 +3,7 @@ package com.example.talkoloco.controllers;
 import android.util.Log;
 
 import com.example.talkoloco.models.User;
+import com.example.talkoloco.utils.Constants;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -10,6 +11,8 @@ import com.google.firebase.firestore.SetOptions;
 
 import java.util.HashMap;
 import java.util.Map;
+
+//signal  lib
 
 public class UserController {
     private final FirebaseFirestore db;
@@ -32,16 +35,27 @@ public class UserController {
 
     public void saveUser(User user, OnSuccessListener<Void> onSuccessListener, OnFailureListener onFailureListener) {
         if (user.getUserId() == null) {
-            Log.e(TAG, "User ID is null");
             onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null"));
             return;
         }
 
-        Log.d(TAG, "Attempting to save user: " + user.getUserId());
+        // Get phone number from Auth if not set
+        if (user.getPhoneNumber() == null) {
+            String phoneNumber = AuthController.getInstance().getCurrentUser();
+            user.setPhoneNumber(phoneNumber);
+        }
 
-        db.collection(USERS_COLLECTION)
+        Map<String, Object> userData = new HashMap<>();
+        userData.put(Constants.KEY_USER_ID, user.getUserId());
+        userData.put(Constants.KEY_PHONE_NUMBER, user.getPhoneNumber());
+        userData.put(Constants.KEY_NAME, user.getName());
+        userData.put(Constants.KEY_PROFILE_PICTURE, user.getProfilePictureUrl());
+        userData.put(Constants.KEY_CREATED_AT, user.getCreatedAt());
+        userData.put(Constants.KEY_LAST_LOGIN, user.getLastLoginAt());
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(user.getUserId())
-                .set(user)
+                .set(userData)
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "User saved successfully");
                     onSuccessListener.onSuccess(aVoid);
@@ -58,10 +72,10 @@ public class UserController {
         Log.d(TAG, "Updating profile for user: " + userId);
 
         Map<String, Object> updates = new HashMap<>();
-        updates.put("name", name);
-        updates.put("profilePictureUrl", profilePictureUrl);  // Can be null to remove profile picture
+        updates.put(Constants.KEY_NAME, name);
+        updates.put(Constants.KEY_PROFILE_PICTURE, profilePictureUrl);
 
-        db.collection(USERS_COLLECTION)
+        db.collection(Constants.KEY_COLLECTION_USERS)  // Use constant instead of USERS_COLLECTION
                 .document(userId)
                 .set(updates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
@@ -70,6 +84,25 @@ public class UserController {
                 })
                 .addOnFailureListener(e -> {
                     Log.e(TAG, "Error updating user profile", e);
+                    onFailureListener.onFailure(e);
+                });
+    }
+
+    public void updatePhoneNumber(String userId, String phoneNumber,
+                                  OnSuccessListener<Void> onSuccessListener,
+                                  OnFailureListener onFailureListener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put(Constants.KEY_PHONE_NUMBER, phoneNumber);
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
+                .document(userId)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Phone number updated successfully");
+                    onSuccessListener.onSuccess(aVoid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error updating phone number", e);
                     onFailureListener.onFailure(e);
                 });
     }

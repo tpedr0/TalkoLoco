@@ -7,7 +7,7 @@ import java.util.List;
 public class UserStatus {
     // Static list of default status options
     private static final List<String> DEFAULT_STATUSES = Arrays.asList(
-            "WhatsApp is buttcheeks compared to this!",
+            "WhatsApp is inferior compared to this!",
             "Available",
             "Busy",
             "At work",

@@ -153,6 +153,11 @@ public class User {
     public boolean isProfileComplete() {
         return name != null && !name.trim().isEmpty();
     }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public String getStatus() {
         return status;
     }

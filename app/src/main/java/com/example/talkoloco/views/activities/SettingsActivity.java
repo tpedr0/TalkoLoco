@@ -10,12 +10,16 @@ import android.provider.MediaStore;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ImageView;
 import android.widget.Toast;
+import android.view.MotionEvent;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -29,8 +33,12 @@ import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivitySettingsBinding;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.models.UserStatus;
+import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.ImageHandler;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.firebase.FirebaseException;
+import com.google.firebase.auth.PhoneAuthCredential;
+import com.google.firebase.auth.PhoneAuthProvider;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,8 +51,12 @@ public class SettingsActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private User currentUser;
     private boolean isNameEditing = false;
+    private boolean isPhoneEditing = false;
+    private String originalPhoneNumber;
     private ArrayAdapter<String> statusAdapter;
     private static final String TAG = "SettingsActivity";
+    private static final int VERIFY_PHONE_REQUEST = 100;
+    private static final int DRAWABLE_RIGHT = 2;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -73,6 +85,7 @@ public class SettingsActivity extends AppCompatActivity {
         // Setup features
         setupDeleteButton();
         setupNameEditing();
+        setupPhoneEditing();
         setupStatusDropdown();
 
         // Setup profile picture click
@@ -110,45 +123,29 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
-    private void saveNewStatus(String newStatus) {
-        String userId = authController.getCurrentUserId();
-        if (userId != null && currentUser != null) {
-            // Save to user status model
-            UserStatus.saveStatus(newStatus);
-
-            // Update adapter
-            statusAdapter.clear();
-            statusAdapter.addAll(UserStatus.getAllStatuses());
-            statusAdapter.notifyDataSetChanged();
-
-            // Save to user profile
-            Map<String, Object> updates = new HashMap<>();
-            updates.put("status", newStatus);
-            userController.updateFields(userId, updates,
-                    aVoid -> {
-                        Toast.makeText(this, "Status updated", Toast.LENGTH_SHORT).show();
-                        hideKeyboard();
-                    },
-                    e -> Toast.makeText(this, "Failed to update status", Toast.LENGTH_SHORT).show()
-            );
-        }
-    }
 
     private void setupNameEditing() {
-        // Make sure EditText is initially disabled but clickable
         binding.nameInput.setEnabled(false);
-        binding.nameInput.setClickable(true);
         binding.nameInput.setFocusable(false);
 
-        // Setup click listener
-        binding.nameInput.setOnClickListener(v -> {
-            binding.nameInput.setEnabled(true);
-            binding.nameInput.setFocusableInTouchMode(true);
-            binding.nameInput.setFocusable(true);
-            binding.nameInput.requestFocus();
-            binding.nameInput.setSelection(binding.nameInput.length());
-            showKeyboard(binding.nameInput);
-            isNameEditing = true;
+        // Add touch listener to detect clicks on the edit icon
+        binding.nameInput.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                // Check if touch was on the drawable end (edit icon)
+                if (event.getRawX() >= (binding.nameInput.getRight() - binding.nameInput.getCompoundDrawables()[2].getBounds().width())) {
+                    if (!isNameEditing) {
+                        binding.nameInput.setEnabled(true);
+                        binding.nameInput.setFocusableInTouchMode(true);
+                        binding.nameInput.setFocusable(true);
+                        binding.nameInput.requestFocus();
+                        binding.nameInput.setSelection(binding.nameInput.length());
+                        showKeyboard(binding.nameInput);
+                        isNameEditing = true;
+                    }
+                    return true;
+                }
+            }
+            return false;
         });
 
         binding.nameInput.setOnEditorActionListener((v, actionId, event) -> {
@@ -196,6 +193,188 @@ public class SettingsActivity extends AppCompatActivity {
         isNameEditing = false;
     }
 
+    private void setupPhoneEditing() {
+        binding.currentPhoneNumber.setEnabled(false);
+        binding.currentPhoneNumber.setFocusable(false);
+
+        // Add touch listener to detect clicks on the edit icon
+        binding.currentPhoneNumber.setOnTouchListener((v, event) -> {
+            if (event.getAction() == MotionEvent.ACTION_UP) {
+                // Check if touch was on the drawable end (edit icon)
+                if (event.getRawX() >= (binding.currentPhoneNumber.getRight() - binding.currentPhoneNumber.getCompoundDrawables()[2].getBounds().width())) {
+                    if (!isPhoneEditing) {
+                        originalPhoneNumber = binding.currentPhoneNumber.getText().toString();
+                        binding.currentPhoneNumber.setEnabled(true);
+                        binding.currentPhoneNumber.setFocusableInTouchMode(true);
+                        binding.currentPhoneNumber.setFocusable(true);
+                        binding.currentPhoneNumber.requestFocus();
+                        binding.currentPhoneNumber.setSelection(binding.currentPhoneNumber.length());
+                        showKeyboard(binding.currentPhoneNumber);
+                        isPhoneEditing = true;
+                    }
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        binding.currentPhoneNumber.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_DONE) {
+                verifyAndSavePhoneNumber();
+                return true;
+            }
+            return false;
+        });
+
+        binding.currentPhoneNumber.setOnFocusChangeListener((v, hasFocus) -> {
+            if (!hasFocus && isPhoneEditing) {
+                verifyAndSavePhoneNumber();
+            }
+        });
+    }
+
+    private void verifyAndSavePhoneNumber() {
+        String newPhoneNumber = binding.currentPhoneNumber.getText().toString().trim();
+
+        if (!newPhoneNumber.equals(originalPhoneNumber)) {
+            // Show verification dialog
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Verify New Phone Number")
+                    .setMessage("To change your phone number, you'll need to verify the new number. Would you like to proceed?")
+                    .setPositiveButton("Verify", (dialog, which) -> {
+                        startPhoneVerification(newPhoneNumber);
+                    })
+                    .setNegativeButton("Cancel", (dialog, which) -> {
+                        // Revert to original number
+                        binding.currentPhoneNumber.setText(originalPhoneNumber);
+                        resetPhoneEditState();
+                    })
+                    .setCancelable(false);
+
+            AlertDialog dialog = builder.create();
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
+            }
+            dialog.show();
+        } else {
+            resetPhoneEditState();
+        }
+    }
+
+    private void startPhoneVerification(String newPhoneNumber) {
+        // Format phone number if needed
+        String formattedPhoneNumber = formatPhoneNumber(newPhoneNumber);
+
+        // Start verification process using AuthController
+        authController.startPhoneNumberVerification(
+                formattedPhoneNumber,
+                this,
+                new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
+                    @Override
+                    public void onVerificationCompleted(PhoneAuthCredential credential) {
+                        // Usually won't be called since we're using manual code verification
+                    }
+
+                    @Override
+                    public void onVerificationFailed(FirebaseException e) {
+                        Log.e(TAG, "Phone verification failed", e);
+                        Toast.makeText(SettingsActivity.this,
+                                "Verification failed. Please try again.",
+                                Toast.LENGTH_SHORT).show();
+                        binding.currentPhoneNumber.setText(originalPhoneNumber);
+                        resetPhoneEditState();
+                    }
+
+                    @Override
+                    public void onCodeSent(String verificationId, PhoneAuthProvider.ForceResendingToken token) {
+                        // Launch VerificationActivity with the necessary data
+                        Intent intent = new Intent(SettingsActivity.this, VerificationActivity.class);
+                        intent.putExtra("verificationId", verificationId);
+                        intent.putExtra("phoneNumber", formattedPhoneNumber);
+                        intent.putExtra("isUpdating", true); // Flag to indicate this is a number update
+                        startActivityForResult(intent, VERIFY_PHONE_REQUEST);
+                    }
+                }
+        );
+    }
+
+    private void updateUserPhoneNumber(String newPhoneNumber) {
+        String userId = authController.getCurrentUserId();
+        if (userId != null && currentUser != null) {
+            Map<String, Object> updates = new HashMap<>();
+            updates.put(Constants.KEY_PHONE_NUMBER, newPhoneNumber);
+
+            userController.updateFields(userId, updates,
+                    aVoid -> {
+                        Toast.makeText(this, "Phone number updated successfully", Toast.LENGTH_SHORT).show();
+                        currentUser.setPhoneNumber(newPhoneNumber);
+                    },
+                    e -> {
+                        Toast.makeText(this, "Failed to update phone number", Toast.LENGTH_SHORT).show();
+                        binding.currentPhoneNumber.setText(originalPhoneNumber);
+                        Log.e(TAG, "Failed to update phone number", e);
+                    }
+            );
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == VERIFY_PHONE_REQUEST) {
+            if (resultCode == RESULT_OK) {
+                // Phone verification was successful, update the user's phone number
+                String newPhoneNumber = binding.currentPhoneNumber.getText().toString().trim();
+                updateUserPhoneNumber(newPhoneNumber);
+            } else {
+                // Verification was cancelled or failed
+                binding.currentPhoneNumber.setText(originalPhoneNumber);
+                Toast.makeText(this, "Phone number update cancelled", Toast.LENGTH_SHORT).show();
+            }
+            resetPhoneEditState();
+        }
+    }
+
+    private void updatePhoneNumber(String newPhoneNumber) {
+        String userId = authController.getCurrentUserId();
+        if (userId != null) {
+            userController.updatePhoneNumber(userId, newPhoneNumber,
+                    aVoid -> {
+                        Toast.makeText(this, "Phone number updated successfully", Toast.LENGTH_SHORT).show();
+                        currentUser.setPhoneNumber(newPhoneNumber);
+                        binding.currentPhoneNumber.setText(newPhoneNumber);
+                    },
+                    e -> {
+                        Toast.makeText(this, "Failed to update phone number", Toast.LENGTH_SHORT).show();
+                        binding.currentPhoneNumber.setText(originalPhoneNumber);
+                        Log.e(TAG, "Failed to update phone number", e);
+                    }
+            );
+        }
+    }
+
+    private String formatPhoneNumber(String phoneNumber) {
+        // Remove any non-digit characters
+        String digitsOnly = phoneNumber.replaceAll("[^0-9]", "");
+
+        // Ensure number starts with country code
+        if (!digitsOnly.startsWith("+")) {
+            // Add your default country code here (e.g., +1 for US)
+            digitsOnly = "+1" + digitsOnly;
+        }
+
+        return digitsOnly;
+    }
+
+    private void resetPhoneEditState() {
+        binding.currentPhoneNumber.setEnabled(false);
+        binding.currentPhoneNumber.setFocusable(false);
+        binding.currentPhoneNumber.setFocusableInTouchMode(false);
+        hideKeyboard();
+        isPhoneEditing = false;
+    }
+
     private void showProfilePictureOptions() {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View bottomSheetView = getLayoutInflater().inflate(R.layout.activity_pfp_options, null);
@@ -226,6 +405,50 @@ public class SettingsActivity extends AppCompatActivity {
         }
 
         bottomSheetDialog.show();
+    }
+
+    private void showFullscreenImage() {
+        if (currentUser == null || currentUser.getProfilePictureUrl() == null) {
+            Toast.makeText(this, "No profile picture available", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_fullscreen_image, null);
+
+        // Find the ImageView in the dialog layout
+        android.widget.ImageView fullscreenImageView = dialogView.findViewById(R.id.fullscreenImageView);
+
+        // Decode and set the image
+        Bitmap profileBitmap = ImageHandler.decodeImage(currentUser.getProfilePictureUrl());
+        if (profileBitmap != null) {
+            fullscreenImageView.setImageBitmap(profileBitmap);
+        } else {
+            fullscreenImageView.setImageResource(R.drawable.ic_profile_placeholder);
+        }
+
+        builder.setView(dialogView);
+        AlertDialog dialog = builder.create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
+            // Make the dialog full screen
+            dialog.getWindow().setLayout(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+            );
+        }
+
+        // Dismiss dialog when clicking anywhere on the image
+        dialogView.setOnClickListener(v -> dialog.dismiss());
+
+        // Set up close button if it exists in the layout
+        View closeButton = dialogView.findViewById(R.id.closeButton);
+        if (closeButton != null) {
+            closeButton.setOnClickListener(v -> dialog.dismiss());
+        }
+
+        dialog.show();
     }
 
     private void openImagePicker() {
@@ -291,30 +514,6 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
-    private void showFullscreenImage() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        View dialogView = getLayoutInflater().inflate(R.layout.dialog_fullscreen_image, null);
-
-        if (currentUser != null && currentUser.getProfilePictureUrl() != null) {
-            Bitmap profileBitmap = ImageHandler.decodeImage(currentUser.getProfilePictureUrl());
-            if (profileBitmap != null) {
-                binding.profileIcon.setImageBitmap(profileBitmap);
-            }
-        } else {
-            binding.profileIcon.setImageResource(R.drawable.ic_profile_placeholder);
-        }
-
-        builder.setView(dialogView);
-        AlertDialog dialog = builder.create();
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
-        }
-
-        dialogView.setOnClickListener(v -> dialog.dismiss());
-        dialog.show();
-    }
-
     private void setupDeleteButton() {
         binding.deleteAccount.setOnClickListener(v -> showDeleteAccountConfirmation());
     }
@@ -376,17 +575,37 @@ public class SettingsActivity extends AppCompatActivity {
             // Set name if available
             if (user.getName() != null) {
                 binding.nameInput.setText(user.getName());
+                Log.d(TAG, "Setting name: " + user.getName());
             }
             binding.nameInput.setEnabled(false);
             binding.nameInput.setFocusable(false);
             binding.nameInput.setClickable(true);
 
             // Set phone number if available
+            Log.d(TAG, "Phone number from user object: " + user.getPhoneNumber());
             if (user.getPhoneNumber() != null) {
                 binding.currentPhoneNumber.setText(user.getPhoneNumber());
+            } else {
+                // If not in Firestore, try getting it from Auth
+                String authPhoneNumber = authController.getCurrentUser();
+                Log.d(TAG, "Phone number from Auth: " + authPhoneNumber);
+                if (authPhoneNumber != null) {
+                    binding.currentPhoneNumber.setText(authPhoneNumber);
+                    // Save the phone number to Firestore
+                    Map<String, Object> updates = new HashMap<>();
+                    updates.put(Constants.KEY_PHONE_NUMBER, authPhoneNumber);
+                    userController.updateFields(user.getUserId(), updates,
+                            aVoid -> Log.d(TAG, "Phone number synced to Firestore"),
+                            e -> Log.e(TAG, "Failed to sync phone number", e)
+                    );
+                }
             }
+            binding.currentPhoneNumber.setEnabled(false);
+            binding.currentPhoneNumber.setFocusable(false);
+            binding.currentPhoneNumber.setClickable(true);
 
             // Set status if available
+            Log.d(TAG, "Status from user object: " + user.getStatus());
             if (user.getStatus() != null) {
                 binding.statusDropdown.setText(user.getStatus(), false);
             } else {
@@ -398,9 +617,14 @@ public class SettingsActivity extends AppCompatActivity {
                 Bitmap profileBitmap = ImageHandler.decodeImage(user.getProfilePictureUrl());
                 if (profileBitmap != null) {
                     binding.profileIcon.setImageBitmap(profileBitmap);
+                    Log.d(TAG, "Set profile picture");
+                } else {
+                    binding.profileIcon.setImageResource(R.drawable.ic_profile_placeholder);
+                    Log.d(TAG, "Failed to decode profile picture, using placeholder");
                 }
             } else {
                 binding.profileIcon.setImageResource(R.drawable.ic_profile_placeholder);
+                Log.d(TAG, "No profile picture URL, using placeholder");
             }
 
         } catch (Exception e) {
@@ -416,6 +640,33 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+
+    private void saveNewStatus(String newStatus) {
+        String userId = authController.getCurrentUserId();
+        if (userId != null && currentUser != null) {
+            // Save to user status model
+            UserStatus.saveStatus(newStatus);
+
+            // Update adapter
+            statusAdapter.clear();
+            statusAdapter.addAll(UserStatus.getAllStatuses());
+            statusAdapter.notifyDataSetChanged();
+
+            // Save to user profile
+            Map<String, Object> updates = new HashMap<>();
+            updates.put(Constants.KEY_STATUS, newStatus);
+
+            userController.updateFields(userId, updates,
+                    aVoid -> {
+                        currentUser.setStatus(newStatus); // Update local user object
+                        Toast.makeText(this, "Status updated", Toast.LENGTH_SHORT).show();
+                        hideKeyboard();
+                    },
+                    e -> Toast.makeText(this, "Failed to update status", Toast.LENGTH_SHORT).show()
+            );
+        }
+    }
+
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
@@ -423,4 +674,3 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 }
-

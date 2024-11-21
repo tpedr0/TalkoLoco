@@ -81,11 +81,13 @@ public class ProfileCreationActivity extends AppCompatActivity {
     private void onDoneClick() {
         String name = binding.nameInput.getText().toString().trim();
         String userId = authController.getCurrentUserId();
+        String phoneNumber = authController.getCurrentUser(); // Get phone from Auth
 
         if (userId != null && !name.isEmpty()) {
             User newUser = new User();
             newUser.setUserId(userId);
             newUser.setName(name);
+            newUser.setPhoneNumber(phoneNumber); // Set phone number
 
             if (selectedImageUri != null) {
                 try {
@@ -106,6 +108,7 @@ public class ProfileCreationActivity extends AppCompatActivity {
             navigateToHome();
         }
     }
+
 
     private void updateUserProfile(User user) {
         userController.saveUser(user,
