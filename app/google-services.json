@@ -1,52 +1,13 @@
 {
   "project_info": {
-    "project_number": "1068151482361",
-    "firebase_url": "https://fir-connection-f3fea-default-rtdb.firebaseio.com",
-    "project_id": "fir-connection-f3fea",
-    "storage_bucket": "fir-connection-f3fea.appspot.com"
+    "project_number": "208255682133",
+    "project_id": "talkoloco-27ce7",
+    "storage_bucket": "talkoloco-27ce7.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1068151482361:android:8bfd006e9582470a04ff28",
-        "android_client_info": {
-          "package_name": "com.example.firebaseconnection"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBZMdq8cnAlOZ9EKi3q4tJX0GV91LvCiZM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1068151482361:android:28958cb6c3f24ee004ff28",
-        "android_client_info": {
-          "package_name": "com.example.movieposter"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBZMdq8cnAlOZ9EKi3q4tJX0GV91LvCiZM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1068151482361:android:f8cf50724af99cf004ff28",
+        "mobilesdk_app_id": "1:208255682133:android:ed14349dba3a66dbf9f6dc",
         "android_client_info": {
           "package_name": "com.example.talkoloco"
         }
@@ -54,26 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBZMdq8cnAlOZ9EKi3q4tJX0GV91LvCiZM"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:1068151482361:android:eba93a0426d646ce04ff28",
-        "android_client_info": {
-          "package_name": "com.example.talkolocotest"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyBZMdq8cnAlOZ9EKi3q4tJX0GV91LvCiZM"
+          "current_key": "AIzaSyD4HpJWYX2SdWjIc2lho1ywfi4zJvciOuE"
         }
       ],
       "services": {

@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
-    <!-- Top Bar -->
-    <androidx.appcompat.widget.Toolbar
-        android:id="@+id/toolbar"
+<androidx.appcompat.widget.Toolbar
+        android:id="@+id/titleContainer"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
+            android:id="@+id/chatsTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/chats"
@@ -20,7 +22,7 @@
             android:textStyle="bold"/>
 
         <ImageButton
-            android:id="@+id/newChatButton"
+            android:id="@+id/addChatIcon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
@@ -31,11 +33,21 @@
 
     </androidx.appcompat.widget.Toolbar>
 
+    <LinearLayout
+        android:id="@+id/homeChats"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:paddingTop="19dp"
+        app:layout_constraintTop_toBottomOf="@+id/titleContainer"
+        tools:layout_editor_absoluteX="16dp">
+
     <TextView
-        android:id="@+id/emptyStateMessage"
+        android:id="@+id/instructionsHome"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/tap_on_in_the_top_right_corner_to_start_a_new_chat"
+        android:text="@string/startingMessage"
         android:textColor="@color/black"
         app:layout_constraintBottom_toTopOf="@id/startMessaging"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -47,23 +59,28 @@
         android:id="@+id/startMessaging"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:padding="8dp"
         android:text="@string/start_messaging"
         android:textColor="@color/primary_blue"
-        android:layout_marginTop="8dp"
         app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/emptyStateMessage" />
+        app:layout_constraintTop_toBottomOf="@id/instructionsHome" />
 
+</LinearLayout>
 
-    <com.google.android.material.bottomnavigation.BottomNavigationView
+<com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:menu="@menu/bottom_nav_menu" />
+        app:menu="@menu/bottom_nav_menu"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 

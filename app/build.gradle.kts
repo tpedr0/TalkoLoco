@@ -38,14 +38,17 @@ android {
 
 dependencies {
 
+    implementation(platform("com.google.firebase:firebase-bom:33.6.0"))
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.firebase.auth)
-    implementation(libs.firebase.firestore)
     implementation(libs.core.splashscreen)
     implementation(libs.lottie)
+    implementation(libs.firebase.auth)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.messaging)
+    implementation(libs.roundedimageview)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

@@ -3,9 +3,14 @@ package com.example.talkoloco.controllers;
 import android.util.Log;
 
 import com.example.talkoloco.models.User;
+import com.example.talkoloco.utils.Constants;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * the UserController class is a singleton controller that manages the user-related operations in the Firestore database.
@@ -36,18 +41,29 @@ public class UserController {
     public void saveUser(User user, OnSuccessListener<Void> onSuccessListener,
                          OnFailureListener onFailureListener) {
         if (user.getUserId() == null) {
-            Log.e(TAG, "Cannot save user: userId is null");
             onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null"));
             return;
         }
 
-        Log.d(TAG, "Saving user with ID: " + user.getUserId());
+        // Get phone number from Auth if not set
+        if (user.getPhoneNumber() == null) {
+            String phoneNumber = AuthController.getInstance().getCurrentUser();
+            user.setPhoneNumber(phoneNumber);
+        }
 
-        db.collection(USERS_COLLECTION)
+        Map<String, Object> userData = new HashMap<>();
+        userData.put(Constants.KEY_USER_ID, user.getUserId());
+        userData.put(Constants.KEY_PHONE_NUMBER, user.getPhoneNumber());
+        userData.put(Constants.KEY_NAME, user.getName());
+        userData.put(Constants.KEY_PROFILE_PICTURE, user.getProfilePictureUrl());
+        userData.put(Constants.KEY_CREATED_AT, user.getCreatedAt());
+        userData.put(Constants.KEY_LAST_LOGIN, user.getLastLoginAt());
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(user.getUserId())
-                .set(user)
+                .set(userData)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "User successfully saved");
+                    Log.d(TAG, "User saved successfully");
                     onSuccessListener.onSuccess(aVoid);
                 })
                 .addOnFailureListener(e -> {
@@ -70,12 +86,13 @@ public class UserController {
                                   OnFailureListener onFailureListener) {
         Log.d(TAG, "Updating profile for user: " + userId);
 
-        db.collection(USERS_COLLECTION)
+        Map<String, Object> updates = new HashMap<>();
+        updates.put(Constants.KEY_NAME, name);
+        updates.put(Constants.KEY_PROFILE_PICTURE, profilePictureUrl);
+
+        db.collection(Constants.KEY_COLLECTION_USERS)  // Use constant instead of USERS_COLLECTION
                 .document(userId)
-                .update(
-                        "name", name,
-                        "profilePictureUrl", profilePictureUrl
-                )
+                .set(updates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "User profile successfully updated");
                     onSuccessListener.onSuccess(aVoid);
@@ -86,13 +103,60 @@ public class UserController {
                 });
     }
 
-    /**
-     * retrieves the user data from the Firestore database by the user ID.
-     *
-     * @param userId               the ID of the user to be retrieved
-     * @param onSuccessListener    the listener for the successful retrieve operation
-     * @param onFailureListener    the listener for the failed retrieve operation
-     */
+    public void updatePhoneNumber(String userId, String phoneNumber,
+                                  OnSuccessListener<Void> onSuccessListener,
+                                  OnFailureListener onFailureListener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put(Constants.KEY_PHONE_NUMBER, phoneNumber);
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
+                .document(userId)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "Phone number updated successfully");
+                    onSuccessListener.onSuccess(aVoid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error updating phone number", e);
+                    onFailureListener.onFailure(e);
+                });
+    }
+
+    public void updateFields(String userId, Map<String, Object> updates,
+                             OnSuccessListener<Void> onSuccessListener,
+                             OnFailureListener onFailureListener) {
+        if (userId == null) {
+            onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null"));
+            return;
+        }
+
+        Log.d(TAG, "Updating fields for user: " + userId);
+
+        db.collection(USERS_COLLECTION)
+                .document(userId)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(aVoid -> {
+                    Log.d(TAG, "User fields successfully updated");
+                    onSuccessListener.onSuccess(aVoid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error updating user fields", e);
+                    onFailureListener.onFailure(e);
+                });
+    }
+
+    public void updateLastLogin(String userId, OnSuccessListener<Void> onSuccessListener,
+                                OnFailureListener onFailureListener) {
+        Map<String, Object> updates = new HashMap<>();
+        updates.put("lastLoginAt", System.currentTimeMillis());
+
+        db.collection(USERS_COLLECTION)
+                .document(userId)
+                .set(updates, SetOptions.merge())
+                .addOnSuccessListener(onSuccessListener)
+                .addOnFailureListener(onFailureListener);
+    }
+
     public void getUserById(String userId, OnSuccessListener<User> onSuccessListener,
                             OnFailureListener onFailureListener) {
         Log.d(TAG, "Fetching user with ID: " + userId);
@@ -164,4 +228,5 @@ public class UserController {
                     onFailureListener.onFailure(e);
                 });
     }
+
 }

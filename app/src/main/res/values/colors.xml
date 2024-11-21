@@ -10,5 +10,8 @@
     <color name="divider_gray">#E0E0E0</color>
     <color name="dark_gray">#262626</color>
     <color name="dark_mode">#1e1f25</color>
+    <color name="darker_gray">#1E1E1E</color>
+    <color name="android_gray">#1e1f25</color>
+
 
 </resources>

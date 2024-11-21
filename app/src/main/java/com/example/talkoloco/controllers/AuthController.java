@@ -80,6 +80,14 @@ public class AuthController {
     }
 
     /**
+     * Gets the current user's phone number
+     * @return the phone number or null if not available
+     */
+    public String getCurrentUser() {
+        return mAuth.getCurrentUser() != null ? mAuth.getCurrentUser().getPhoneNumber() : null;
+    }
+
+    /**
      * retrieves the current user's ID, if the user is signed in.
      *
      * @return the current user's ID, or null if the user is not signed in
