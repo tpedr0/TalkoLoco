@@ -1,13 +1,19 @@
 package com.example.talkoloco.models;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
     private String phoneNumber;
-    private String name;
+
+    //changed from private to public so it can be accessed from the ChatActivity class
+    public String name;
     private String profilePictureUrl;
     private String userId;
     private long createdAt;
     private long lastLoginAt;
     private String status;
+
+    public String image, email, token, id;
 
 
     /**

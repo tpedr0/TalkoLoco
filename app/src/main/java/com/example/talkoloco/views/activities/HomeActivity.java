@@ -19,7 +19,11 @@ import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.NavigationController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityHomeBinding;
+import com.example.talkoloco.models.User;
+import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.PhoneNumberFormatter;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 
 public class HomeActivity extends AppCompatActivity {
     private ActivityHomeBinding binding;
@@ -148,26 +152,63 @@ public class HomeActivity extends AppCompatActivity {
             dialog.getWindow().setWindowAnimations(R.style.DialogAnimation);
         }
         dialog.show();
+        startChatButton.setOnClickListener(v -> {
+            String phoneNumber = phoneInput.getText().toString();
+            String digits = phoneNumber.replaceAll("[^\\d]", "");
+            if (digits.length() == 11) {
+                startNewChat(phoneNumber);
+                dialog.dismiss();
+            }
+        });
     }
 
+    private void checkIfUserExistsByPhoneNumber(String phoneNumber) {
+        FirebaseFirestore database = FirebaseFirestore.getInstance();
+        database.collection(Constants.KEY_COLLECTION_USERS)
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber) // Filter by phone number
+                .get()
+                .addOnCompleteListener(task -> {
+
+                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                        // User exists, extract user details
+                        for (QueryDocumentSnapshot queryDocumentSnapshot : task.getResult()) {
+                            User user = new User();
+                            user.name = queryDocumentSnapshot.getString(Constants.KEY_NAME);
+                            user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
+                            user.id = queryDocumentSnapshot.getId();
+
+                            // Navigate to chat or handle the found user
+                            startNewChatWithUser(user);
+                            return; // Exit after handling the first match
+                        }
+                    } else {
+                        // No user found with the given phone number
+                        Toast.makeText(this, "No user found with this phone number", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+
     private void startNewChat(String phoneNumber) {
-        // strip formatting before checking user existence
+        // Strip formatting from the phone number
         String cleanPhoneNumber = PhoneNumberFormatter.stripFormatting(phoneNumber);
 
-        userController.checkIfUserExists(cleanPhoneNumber,
-                exists -> {
-                    if (exists) {
-                        // TODO: Start chat with user
-                        Toast.makeText(HomeActivity.this,
-                                "Starting chat with: " + phoneNumber, Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(HomeActivity.this,
-                                "No user found with this number", Toast.LENGTH_SHORT).show();
-                    }
-                },
-                e -> Toast.makeText(HomeActivity.this,
-                        "Error checking user: " + e.getMessage(), Toast.LENGTH_SHORT).show()
-        );
+        // Check if the user exists by phone number
+        checkIfUserExistsByPhoneNumber(cleanPhoneNumber);
+    }
+
+    private void startNewChatWithUser(User user) {
+        if (user == null) {
+            Toast.makeText(this, "Invalid user data", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // Navigate to ChatActivity with the user details
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra(Constants.KEY_USER, user); // Pass user object to ChatActivity
+        startActivity(intent);
     }
 
     @Override
