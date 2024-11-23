@@ -4,8 +4,51 @@
     xmlns:tools="http://schemas.android.com/tools"
     app:layout_constraintTop_toTopOf="parent"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
->
+    android:layout_height="wrap_content">
+
+
+    <!-- Profile pic -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/profile_pic"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:contentDescription="@string/profile_picture"
+        android:src="@drawable/ic_pfp"
+        android:layout_margin="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Contact -->
+    <TextView
+        android:id="@+id/contact"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:text="@string/_1_350_454_2345"
+        android:textColor="@color/black"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/profile_pic"
+        app:layout_constraintEnd_toStartOf="@id/chat_info"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/profile_pic" />
+
+    <!-- Chat Info -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/chat_info"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_margin="15dp"
+        android:padding="5dp"
+        android:src="@drawable/round_dehaze_24"
+        app:tint="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
 
     <ImageView
         android:id="@+id/profileIcon"
@@ -19,26 +62,6 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintVertical_bias="0.696" />
 
-    <TextView
-        android:id="@+id/contact"
-        android:layout_width="412dp"
-        android:layout_height="57dp"
-        android:background="@color/white"
-        android:padding="15dp"
-        android:paddingStart="40dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="8dp"
-        android:src="@drawable/ic_pfp"
-        android:text="@string/_1_350_454_2345"
-        android:textAlignment="center"
-        android:textColor="@color/black"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/date"
@@ -76,27 +99,6 @@
         android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
-    <ImageView
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_margin="15dp"
-        android:contentDescription="@string/app_name"
-        android:src="@drawable/round_dehaze_24"
-        app:tint="@color/black"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="358dp"
-        tools:layout_editor_absoluteY="16dp" />
-
-    <ImageView
-        android:layout_width="44dp"
-        android:layout_height="37dp"
-        android:layout_margin="15dp"
-        android:contentDescription="@string/app_name"
-        android:src="@drawable/ic_pfp"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="99dp"
-        tools:layout_editor_absoluteY="12dp" />
 
     <TextView
         android:id="@+id/messageSender"
