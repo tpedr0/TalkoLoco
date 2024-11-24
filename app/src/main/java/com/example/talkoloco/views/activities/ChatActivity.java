@@ -2,14 +2,19 @@ package com.example.talkoloco.views.activities;
 
 import static android.content.ContentValues.TAG;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.adapters.ChatAdapter;
@@ -35,11 +40,22 @@ public class ChatActivity extends AppCompatActivity {
 
     private ActivityChatBinding binding;
     private User receiverUser;
+    private Uri selectedImageUri;
     private List<ChatMessages> chatMessages;
     private ChatAdapter chatAdapter;
     private PreferenceManager preferenceManager;
 
     private FirebaseFirestore database;
+
+    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    selectedImageUri = result.getData().getData();
+                    //send image
+                }
+            }
+    );
 
 
 
@@ -238,6 +254,14 @@ public class ChatActivity extends AppCompatActivity {
         binding.imageBack.setOnClickListener(v -> onBackPressed());
         //chat
         binding.sendMessage.setOnClickListener(v-> sendMessages());
+
+        binding.attachments.setOnClickListener(v -> openImagePicker());
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        imagePickerLauncher.launch(intent);
     }
 
     private String getReadableDateTime(Date date) {
