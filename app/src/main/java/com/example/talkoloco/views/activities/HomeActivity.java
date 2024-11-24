@@ -163,26 +163,34 @@ public class HomeActivity extends AppCompatActivity {
     }
 
     private void checkIfUserExistsByPhoneNumber(String phoneNumber) {
+        if (phoneNumber == null || phoneNumber.isEmpty()) {
+            Toast.makeText(this, "Invalid phone number", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         database.collection(Constants.KEY_COLLECTION_USERS)
-                .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber) // Filter by phone number
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber)
                 .get()
                 .addOnCompleteListener(task -> {
-
                     if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
                         // User exists, extract user details
                         for (QueryDocumentSnapshot queryDocumentSnapshot : task.getResult()) {
-                            User user = new User();
-                            user.name = queryDocumentSnapshot.getString(Constants.KEY_NAME);
-                            user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
-                            user.id = queryDocumentSnapshot.getId();
+                            try {
+                                User user = new User();
+                                user.name = queryDocumentSnapshot.getString(Constants.KEY_NAME);
+                                user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
+                                user.id = queryDocumentSnapshot.getId();
+                                user.image = queryDocumentSnapshot.getString(Constants.KEY_IMAGE); // Make sure this field exists
 
-                            // Navigate to chat or handle the found user
-                            startNewChatWithUser(user);
-                            return; // Exit after handling the first match
+                                // Navigate to chat
+                                startNewChatWithUser(user);
+                                return;
+                            } catch (Exception e) {
+                                Toast.makeText(this, "Error creating user object: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            }
                         }
                     } else {
-                        // No user found with the given phone number
                         Toast.makeText(this, "No user found with this phone number", Toast.LENGTH_SHORT).show();
                     }
                 })

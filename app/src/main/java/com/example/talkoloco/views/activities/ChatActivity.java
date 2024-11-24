@@ -1,9 +1,12 @@
 package com.example.talkoloco.views.activities;
 
+import static android.content.ContentValues.TAG;
+
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -43,8 +46,22 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d(TAG, "ChatActivity onCreate started");
+
         binding = ActivityChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // Get user from intent
+        receiverUser = (User) getIntent().getSerializableExtra(Constants.KEY_USER);
+        if (receiverUser == null) {
+            Log.e(TAG, "Receiver user is null");
+            Toast.makeText(this, "Error: No user data received", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
+
+        Log.d(TAG, "Received user: " + receiverUser.name + ", ID: " + receiverUser.id);
+
         loadReceiverDetails();
         setListeners();
         init();
@@ -52,18 +69,35 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void init() {
-        preferenceManager = new PreferenceManager(getApplicationContext());
-        chatMessages = new ArrayList<>();
-        Bitmap receiverBitmap = getBitmapFromEncodedString(receiverUser.image);
+        try {
+            preferenceManager = new PreferenceManager(getApplicationContext());
+            chatMessages = new ArrayList<>();
 
-        chatAdapter = new ChatAdapter(
-                chatMessages,
-                getBitmapFromEncodedString(receiverUser.image),
-                preferenceManager.getString(Constants.KEY_USER_ID)
-        );
-        binding.chatRecyclerView.setAdapter(chatAdapter);
-        database = FirebaseFirestore.getInstance();
+            // Safely handle the receiver's profile picture
+            Bitmap receiverBitmap = null;
+            if (receiverUser != null && receiverUser.profilePictureUrl != null && !receiverUser.profilePictureUrl.isEmpty()) {
+                receiverBitmap = getBitmapFromEncodedString(receiverUser.profilePictureUrl);
+            }
+
+            chatAdapter = new ChatAdapter(
+                    chatMessages,
+                    receiverBitmap,  // This can now be null
+                    preferenceManager.getString(Constants.KEY_USER_ID)
+            );
+
+            if (binding != null && binding.chatRecyclerView != null) {
+                binding.chatRecyclerView.setAdapter(chatAdapter);
+            } else {
+                throw new IllegalStateException("Binding or RecyclerView is null");
+            }
+
+            database = FirebaseFirestore.getInstance();
+        } catch (Exception e) {
+            Toast.makeText(this, "Error initializing chat: " + e.getMessage(), Toast.LENGTH_LONG).show();
+            finish(); // Safely close the activity
+        }
     }
+
 
 
     private void sendMessages() {

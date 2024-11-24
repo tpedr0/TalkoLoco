@@ -23,6 +23,8 @@ public class Constants {
     public static final String KEY_RECEIVER_ID = "receiverId";
     public static final String KEY_MESSAGE = "message";
     public static final String KEY_TIMESTAMP = "timestamp";
+    public static final String KEY_IMAGE = "image";
+
 
     // shared preferences
     public static final String KEY_PREFERENCE_NAME = "talkolocoPrefs";

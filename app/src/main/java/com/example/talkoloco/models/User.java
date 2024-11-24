@@ -7,7 +7,7 @@ public class User implements Serializable {
 
     //changed from private to public so it can be accessed from the ChatActivity class
     public String name;
-    private String profilePictureUrl;
+    public String profilePictureUrl;
     private String userId;
     private long createdAt;
     private long lastLoginAt;
