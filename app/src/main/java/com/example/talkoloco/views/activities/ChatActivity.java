@@ -98,31 +98,91 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-
-
     private void sendMessages() {
+        String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
+        Log.d("ChatDebug", "Current User ID from preferences: " + currentUserId);
+        Log.d("ChatDebug", "Receiver User ID: " + receiverUser.id);
+
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            Log.e("ChatDebug", "Current user ID is null or empty!");
+            // Try to get the current user ID from Firebase Auth
+            FirebaseFirestore.getInstance()
+                    .collection(Constants.KEY_COLLECTION_USERS)
+                    .whereEqualTo(Constants.KEY_USER_ID, preferenceManager.getString(Constants.KEY_USER_ID))
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        if (!querySnapshot.isEmpty()) {
+                            String userId = querySnapshot.getDocuments().get(0).getId();
+                            Log.d("ChatDebug", "Retrieved user ID from Firebase: " + userId);
+                            // Save it to preferences
+                            preferenceManager.putString(Constants.KEY_USER_ID, userId);
+                            // Try sending the message again now that we have the ID
+                            sendMessages();
+                        } else {
+                            Toast.makeText(ChatActivity.this,
+                                    "Could not find user details",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(ChatActivity.this,
+                                "Error retrieving user details: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    });
+            return;
+        }
+
+        if (binding.messageInput.getText().toString().trim().isEmpty()) {
+            Toast.makeText(ChatActivity.this,
+                    "Message cannot be empty",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         HashMap<String, Object> message = new HashMap<>();
-        message.put(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID));
+        message.put(Constants.KEY_SENDER_ID, currentUserId);
         message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
         message.put(Constants.KEY_MESSAGE, binding.messageInput.getText().toString());
         message.put(Constants.KEY_TIMESTAMP, new Date());
 
-        database.collection(Constants.KEY_COLLECTION_CHAT).add(message);
-        binding.messageInput.setText(null);
+        Log.d("ChatDebug", "Message object: " + message.toString());
+
+        database.collection(Constants.KEY_COLLECTION_CHAT)
+                .add(message)
+                .addOnSuccessListener(documentReference -> {
+                    Log.d("ChatDebug", "Message sent successfully");
+                    binding.messageInput.setText(null);
+                    // Optionally scroll to bottom of chat
+                    if (chatMessages != null && !chatMessages.isEmpty()) {
+                        binding.chatRecyclerView.smoothScrollToPosition(chatMessages.size() - 1);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ChatDebug", "Failed to send message", e);
+                    Toast.makeText(ChatActivity.this,
+                            "Error sending message: " + e.getMessage(),
+                            Toast.LENGTH_SHORT).show();
+                });
     }
+
+
 
     private void listenMessages() {
+        String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
+        if (currentUserId == null || receiverUser == null || receiverUser.id == null) {
+            return;
+        }
+
         database.collection(Constants.KEY_COLLECTION_CHAT)
-                .whereEqualTo(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID)) // Query
-                .whereEqualTo(Constants.KEY_RECEIVER_ID, receiverUser.id)
+                .whereEqualTo("senderId", currentUserId)
+                .whereEqualTo("receiverId", receiverUser.id)
                 .addSnapshotListener(eventListener);
 
-        database.collection(Constants.KEY_COLLECTION_CHAT) // CollectionReference
-                .whereEqualTo(Constants.KEY_RECEIVER_ID, preferenceManager.getString(Constants.KEY_USER_ID)) // Query
-                .whereEqualTo(Constants.KEY_SENDER_ID, receiverUser.id)
+        database.collection(Constants.KEY_COLLECTION_CHAT)
+                .whereEqualTo("receiverId", currentUserId)
+                .whereEqualTo("senderId", receiverUser.id)
                 .addSnapshotListener(eventListener);
     }
-
 
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
         if (error != null) {

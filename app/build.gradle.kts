@@ -49,7 +49,7 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
     implementation(libs.roundedimageview)
-    implementation(libs.signal.protocol.java)
+    // implementation(libs.signal.protocol.java)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
