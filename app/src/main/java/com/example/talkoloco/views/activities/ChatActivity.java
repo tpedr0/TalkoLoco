@@ -22,6 +22,7 @@ import com.example.talkoloco.databinding.ActivityChatBinding;
 import com.example.talkoloco.models.ChatMessages;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.Constants;
+import com.example.talkoloco.utils.ImageHandler;
 import com.example.talkoloco.utils.PreferenceManager;
 import com.google.firebase.firestore.DocumentChange;
 import com.google.firebase.firestore.EventListener;
@@ -52,7 +53,7 @@ public class ChatActivity extends AppCompatActivity {
             result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     selectedImageUri = result.getData().getData();
-                    //send image
+                    sendImage();
                 }
             }
     );
@@ -179,6 +180,60 @@ public class ChatActivity extends AppCompatActivity {
                             "Error sending message: " + e.getMessage(),
                             Toast.LENGTH_SHORT).show();
                 });
+    }
+
+    private void sendImage(){
+        String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
+        Log.d("ChatDebug", "Current User ID from preferences: " + currentUserId);
+        Log.d("ChatDebug", "Receiver User ID: " + receiverUser.id);
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            Log.e("ChatDebug", "Current user ID is null or empty!");
+            // Try to get the current user ID from Firebase Auth
+            FirebaseFirestore.getInstance()
+                    .collection(Constants.KEY_COLLECTION_USERS)
+                    .whereEqualTo(Constants.KEY_USER_ID, preferenceManager.getString(Constants.KEY_USER_ID))
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        if (!querySnapshot.isEmpty()) {
+                            String userId = querySnapshot.getDocuments().get(0).getId();
+                            Log.d("ChatDebug", "Retrieved user ID from Firebase: " + userId);
+                            // Save it to preferences
+                            preferenceManager.putString(Constants.KEY_USER_ID, userId);
+                            // Try sending the message again now that we have the ID
+                            sendImage();
+                        } else {
+                            Toast.makeText(ChatActivity.this,
+                                    "Could not find user details",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(ChatActivity.this,
+                                "Error retrieving user details: " + e.getMessage(),
+                                Toast.LENGTH_SHORT).show();
+                    });
+            return;
+        } else {
+            try {
+                String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
+                if (ImageHandler.isImageSizeValid(encodedImage)) {
+                    HashMap<String, Object> message = new HashMap<>();
+
+                    message.put(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID));
+                    message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
+
+                    message.put(Constants.KEY_MESSAGE, encodedImage);
+                    message.put(Constants.KEY_TIMESTAMP, new Date());
+
+                    database.collection(Constants.KEY_COLLECTION_CHAT).add(message);
+                } else {
+                    Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
+                }
+            } catch (Exception e) {
+                Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+            }
+
+        }
     }
 
 
