@@ -20,6 +20,7 @@ import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.ImageHandler;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+
 import java.util.HashMap;
 
 public class ProfileCreationActivity extends AppCompatActivity {
@@ -111,15 +112,22 @@ public class ProfileCreationActivity extends AppCompatActivity {
 
 
     private void updateUserProfile(User user) {
-        userController.saveUser(user,
+        userController.saveUser(user, this, // Pass 'this' as the context
                 aVoid -> {
                     Toast.makeText(this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
                     navigateToHome();
                 },
-                e -> Toast.makeText(this, "Error updating profile: " + e.getMessage(),
-                        Toast.LENGTH_SHORT).show()
+                e -> {
+                    String errorMessage = (e != null && e.getMessage() != null)
+                            ? e.getMessage()
+                            : "An unknown error occurred";
+                    Toast.makeText(this, "Error updating profile: " + errorMessage,
+                            Toast.LENGTH_SHORT).show();
+                }
         );
     }
+
+
 
     private void onProfileIconClick() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);

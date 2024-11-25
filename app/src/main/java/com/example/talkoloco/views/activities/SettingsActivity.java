@@ -30,6 +30,7 @@ import com.example.talkoloco.models.User;
 import com.example.talkoloco.models.UserStatus;
 import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.ImageHandler;
+import com.example.talkoloco.utils.PreferenceManager;
 import com.example.talkoloco.utils.ThemeManager;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.FirebaseException;
@@ -573,16 +574,30 @@ public class SettingsActivity extends AppCompatActivity {
                     user -> {
                         if (user != null) {
                             updateUI(user);
+                            // Get locally stored display number
+                            String displayNumber = userController.getDisplayPhoneNumber(this);
+                            binding.currentPhoneNumber.setText(displayNumber != null ?
+                                    displayNumber : "No phone number available");
                         }
                         binding.profileIcon.setAlpha(1.0f);
                     },
                     e -> {
                         Log.e(TAG, "Error loading user data", e);
-                        Toast.makeText(this,
-                                "Error loading user data", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show();
                         binding.profileIcon.setAlpha(1.0f);
                     }
             );
+        }
+
+        // Retrieve phone number from SharedPreferences
+        PreferenceManager preferenceManager = new PreferenceManager(this);
+        String displayPhoneNumber = preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
+
+        // Update the phone number field in the UI
+        if (displayPhoneNumber != null) {
+            binding.currentPhoneNumber.setText(displayPhoneNumber);
+        } else {
+            binding.currentPhoneNumber.setText("No phone number available");
         }
     }
 
