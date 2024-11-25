@@ -4,10 +4,11 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
+//import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +46,25 @@ public class MainActivity extends AppCompatActivity {
 
         initializeViews();
         setupPhoneNumberInput();
+
+        /*
+        Yonatan code
+         FloatingActionButton click listener
+        */
+
+       // binding.phoneInput.setOnClickListener(v -> startNewChat());
+        // Reference to the "+" icon
+        ImageView addChatIcon = findViewById(R.id.addChatIcon);
+       // add_chat_icon
+        // Set a click listener on the "+" icon
+        addChatIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Start the NewChatActivity
+                Intent intent = new Intent(MainActivity.this, NewChatActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 
     // initializes the views and sets up phone number input field
@@ -131,6 +151,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+
+    //yonatan new code
+    
+
+    //yonatan
 
     /**
      * displays a confirmation dialog for the entered phone number and starts the phone number verification process.
@@ -260,6 +285,16 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(MainActivity.this, ProfileCreationActivity.class);
         startActivity(intent);
         finish();
+    }
+
+    /**
+     * Yonatan code
+     * Starts a new chat (this is where you define what should happen when the FAB is clicked).
+     */
+    private void startNewChat() {
+        // Here, you can put the logic to start a new chat
+
+        Toast.makeText(this, "Starting a new chat...", Toast.LENGTH_SHORT).show();
     }
 
     @Override

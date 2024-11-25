@@ -4,10 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+//import android.view.View;
+//import android.widget.ImageView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+//import com.example.talkoloco.R;
 import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
@@ -29,7 +32,22 @@ public class ProfileCreationActivity extends AppCompatActivity {
 
         initializeViews();
         setupNameInput();
-    }
+
+       /* //@ yonatan
+        // Reference to the "+" icon
+        ImageView addChatIcon = findViewById(R.id.addChatIcon);
+
+// Set a click listener on the "+" icon add_chat_icon  MainActivity.this
+        addChatIcon.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+// Start the NewChatActivity
+                Intent intent = new Intent(MainActivity.this, NewChatActivity.class);
+                startActivity(intent);
+            }
+        });*/
+
+    }// @yonatan
 
     private void initializeViews() {
         // now uses binding instead of findViewById
@@ -65,8 +83,8 @@ public class ProfileCreationActivity extends AppCompatActivity {
 
             updateUserProfile(newUser);
         }
-
-        Intent intent = new Intent(ProfileCreationActivity.this, HomeActivity.class);
+//HomeActivity.class
+        Intent intent = new Intent(ProfileCreationActivity.this, NewChatActivity.class);
         // clears the back stack so user can't go back to auth flow
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);

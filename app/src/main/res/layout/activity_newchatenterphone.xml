@@ -5,58 +5,59 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
+    tools:context=".views.activities.MainActivity"
     android:background="#F5F5F5">
 
-    <!-- First Change -->
+    <!-- Second  Yonatan Change -->
 
     <!-- Header Text -->
     <TextView
         android:id="@+id/titleTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
-        android:text="New chat"
+
+        android:text="@string/new_chat"
         android:textColor="#000"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_margin="16dp"
-        app:layout_constraintTop_toTopOf="parent" />
 
+        app:layout_constraintTop_toTopOf="parent" />
+    <!-- android:layout_marginTop="50dp"-->
     <!-- Subtitle Text -->
     <TextView
         android:id="@+id/subtitleTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="75dp"
+        android:layout_marginTop="100dp"
         android:layout_marginBottom="25dp"
-        android:text="Enter a phone number to start a new chat"
+        android:text="@string/enter_a_phone_number_to_start_a_new_chat"
         android:textColor="#888888"
         android:textSize="16sp"
         app:layout_constraintBottom_toTopOf="@+id/phoneNumberEditText"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_margin="8dp"
+
         app:layout_constraintTop_toBottomOf="@id/titleTextView" />
 
-    <!-- Phone Number Input Field -->
+    <!-- Phone Number Input Field   app:layout_constraintTop_margin="8dp"-->
     <EditText
         android:id="@+id/phoneNumberEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="100dp"
         android:background="@android:color/darker_gray"
-        android:hint="+1(509)555-5555"
+        android:hint="@string/_1_509_555_5555"
         android:inputType="phone"
         android:padding="12dp"
         android:textColor="#000000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_margin="16dp"
+
         app:layout_constraintTop_toBottomOf="@id/subtitleTextView"
-        app:layout_constraintWidth_percent="0.8" />
+        app:layout_constraintWidth_percent="0.8"
+        android:autofillHints="" />
 
     <!-- Start Chat Button -->
     <Button
@@ -66,15 +67,15 @@
         android:layout_marginTop="25dp"
         android:backgroundTint="#D3D3D3"
         android:padding="12dp"
-        android:text="Start a chat"
+        android:text="@string/start_a_chat"
         android:textColor="#000"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_margin="16dp"
+
         app:layout_constraintTop_toBottomOf="@id/phoneNumberEditText"
         app:layout_constraintWidth_percent="0.8" />
 
-    <!-- Numeric Keypad -->
+
     <GridLayout
         android:id="@+id/numericKeypad"
         android:layout_width="315dp"
@@ -90,74 +91,63 @@
         app:layout_constraintTop_toBottomOf="@+id/startChatButton"
         app:layout_constraintWidth_percent="0.8">
 
-        <!-- Number Buttons -->
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_row="0"
-            android:insetLeft="0dp"
-            android:text="5\nJKL" />
 
-        <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_row="0"
-            android:layout_column="0"
-            android:insetLeft="0dp"
-            android:text="5\nJKL" />
+
+
+
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_row="0"
             android:layout_column="0"
-            android:text="1" />
+            android:text="@string/_1" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_row="0"
 
-            android:text="2\nABC" />
+            android:text="@string/_2_nabc" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="3\nDEF" />
+            android:text="@string/_3_ndef" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="4\nGHI" />
+            android:text="@string/_4_nghi" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:insetLeft="0dp"
-            android:text="5\nJKL" />
+            android:text="@string/_5_njkl" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="6\nMNO" />
+            android:text="@string/_6_nmno" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="7\nPQRS" />
+            android:text="@string/_7_npqrs" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="8\nTUV" />
+            android:text="@string/_8_ntuv" />
 
         <Button
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_row="0"
 
-            android:text="9\nWXYZ" />
+            android:text="@string/_9_nwxyz" />
 
 
         <Button
@@ -165,7 +155,7 @@
             android:layout_height="wrap_content"
             android:layout_row="3"
             android:layout_column="1"
-            android:text="0" />
+            android:text="@string/_0" />
 
         <View
             android:layout_width="85dp"
@@ -179,7 +169,7 @@
             android:layout_row="2"
 
 
-            android:text="⌫"
+            android:text="@string/x"
             android:textColor="#FF0000" />
 
     </GridLayout>
@@ -188,9 +178,26 @@
         android:id="@+id/button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Cancel"
-        tools:layout_editor_absoluteX="304dp"
-        tools:layout_editor_absoluteY="95dp" />
+        android:text="@string/cancel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        android:layout_marginTop="30dp"
+        android:layout_marginEnd="0dp"
+        android:layout_marginStart="270dp"/> <!-- Use smaller, relative margin -->
+    <!--android:layout_marginStart="16dp" Adjust the margin to be relative -->
+    <!--android:padding="8dp" Add padding inside the button for better spacing -->
+    <!--app:layout_constraintHorizontal_bias="0.5"  Use bias to center horizontally -->
+    <!-- app:layout_constraintVertical_bias="0.1"/>  Adjust vertical position using bias -->
+
+    <!--Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/cancel"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        android:layout_marginTop="95dp"
+        android:layout_marginStart="304dp"/-->
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
