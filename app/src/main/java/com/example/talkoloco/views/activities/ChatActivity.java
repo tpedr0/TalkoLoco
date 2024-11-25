@@ -63,12 +63,20 @@ public class ChatActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "ChatActivity onCreate started");
-
         binding = ActivityChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Get user from intent
+        preferenceManager = new PreferenceManager(getApplicationContext());
+
+        // Debug log to check if user ID exists in preferences
+        String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
+        Log.d(TAG, "Current user ID from preferences: " + currentUserId);
+
+        // If current user ID is missing, try to recover it
+        if (currentUserId == null || currentUserId.isEmpty()) {
+            retrieveCurrentUserFromFirestore();
+        }
+
         receiverUser = (User) getIntent().getSerializableExtra(Constants.KEY_USER);
         if (receiverUser == null) {
             Log.e(TAG, "Receiver user is null");
@@ -77,13 +85,66 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
-        Log.d(TAG, "Received user: " + receiverUser.name + ", ID: " + receiverUser.id);
-
         loadReceiverDetails();
         setListeners();
         init();
         listenMessages();
     }
+
+    private void retrieveCurrentUserFromFirestore() {
+        // Get the current user's phone number
+        String phoneNumber = preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
+
+        if (phoneNumber != null && !phoneNumber.isEmpty()) {
+            FirebaseFirestore.getInstance()
+                    .collection(Constants.KEY_COLLECTION_USERS)
+                    .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber)
+                    .get()
+                    .addOnSuccessListener(querySnapshot -> {
+                        if (!querySnapshot.isEmpty()) {
+                            // Get the first document (user)
+                            String userId = querySnapshot.getDocuments().get(0).getId();
+                            Log.d(TAG, "Retrieved user ID from Firebase: " + userId);
+
+                            // Save it to preferences
+                            preferenceManager.putString(Constants.KEY_USER_ID, userId);
+
+                            // Restart the chat initialization
+                            init();
+                            listenMessages();
+                        } else {
+                            Log.e(TAG, "No user found with phone number: " + phoneNumber);
+                            Toast.makeText(ChatActivity.this,
+                                    "Could not find user details. Please try logging in again.",
+                                    Toast.LENGTH_LONG).show();
+                            redirectToLogin();
+                        }
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e(TAG, "Error retrieving user details", e);
+                        Toast.makeText(ChatActivity.this,
+                                "Error retrieving user details: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
+                        redirectToLogin();
+                    });
+        } else {
+            Log.e(TAG, "No phone number found in preferences");
+            redirectToLogin();
+        }
+    }
+
+    private void redirectToLogin() {
+        // Clear preferences
+        preferenceManager.clear();
+
+        // Redirect to your main activity (phone number input)
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+
 
     private void init() {
         try {
