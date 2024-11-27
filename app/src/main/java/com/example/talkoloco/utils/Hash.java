@@ -1,5 +1,7 @@
 package com.example.talkoloco.utils;
 
+import android.util.Log;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -15,4 +17,10 @@ public class Hash {
             throw new RuntimeException("Hashing failed", e);
         }
     }
+    public static void debugPhoneHash(String phoneNumber) {
+        String hash = hashPhoneNumber(phoneNumber);
+        Log.d("Hash", "Original number: " + phoneNumber);
+        Log.d("Hash", "Hashed value: " + hash);
+    }
+
 }

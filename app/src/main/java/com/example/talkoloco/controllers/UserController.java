@@ -244,4 +244,46 @@ public class UserController {
                 });
     }
 
+
+    public void findUserByPhoneNumber(String phoneNumber, OnSuccessListener<User> onSuccessListener,
+                                      OnFailureListener onFailureListener) {
+        // Hash the phone number before querying
+        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
+        Log.d(TAG, "Searching for user with phone hash: " + hashedPhoneNumber);
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
+                .whereEqualTo("phoneNumber", hashedPhoneNumber)  // Match the field name exactly
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    Log.d(TAG, "Query returned " + querySnapshot.size() + " results");
+                    if (!querySnapshot.isEmpty()) {
+                        try {
+                            // Get the document data
+                            Map<String, Object> data = querySnapshot.getDocuments().get(0).getData();
+                            Log.d(TAG, "Document data: " + data);
+
+                            User user = new User();
+                            user.setUserId(querySnapshot.getDocuments().get(0).getId());
+                            user.id = user.getUserId();
+                            user.setPhoneNumber_display(phoneNumber);
+                            user.setPhoneNumber_hash(hashedPhoneNumber);
+                            user.setName((String) data.get("name"));
+                            user.setProfilePictureUrl((String) data.get("profilePictureUrl"));
+
+                            Log.d(TAG, "Created user object: " + user.getName());
+                            onSuccessListener.onSuccess(user);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error parsing user data", e);
+                            onFailureListener.onFailure(e);
+                        }
+                    } else {
+                        Log.d(TAG, "No user found with hash: " + hashedPhoneNumber);
+                        onFailureListener.onFailure(new Exception("No user found"));
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Query failed", e);
+                    onFailureListener.onFailure(e);
+                });
+    }
 }

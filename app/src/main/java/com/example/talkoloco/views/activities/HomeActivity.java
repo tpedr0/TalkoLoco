@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -21,6 +22,7 @@ import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityHomeBinding;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.Constants;
+import com.example.talkoloco.utils.Hash;
 import com.example.talkoloco.utils.PhoneNumberFormatter;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
@@ -162,50 +164,32 @@ public class HomeActivity extends AppCompatActivity {
         });
     }
 
-    private void checkIfUserExistsByPhoneNumber(String phoneNumber) {
-        if (phoneNumber == null || phoneNumber.isEmpty()) {
-            Toast.makeText(this, "Invalid phone number", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        FirebaseFirestore database = FirebaseFirestore.getInstance();
-        database.collection(Constants.KEY_COLLECTION_USERS)
-                .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
-                        // User exists, extract user details
-                        for (QueryDocumentSnapshot queryDocumentSnapshot : task.getResult()) {
-                            try {
-                                User user = new User();
-                                user.name = queryDocumentSnapshot.getString(Constants.KEY_NAME);
-                                user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
-                                user.id = queryDocumentSnapshot.getId();
-                                user.image = queryDocumentSnapshot.getString(Constants.KEY_IMAGE); // Make sure this field exists
-
-                                // Navigate to chat
-                                startNewChatWithUser(user);
-                                return;
-                            } catch (Exception e) {
-                                Toast.makeText(this, "Error creating user object: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                            }
-                        }
-                    } else {
-                        Toast.makeText(this, "No user found with this phone number", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                });
-    }
-
-
     private void startNewChat(String phoneNumber) {
         // Strip formatting from the phone number
         String cleanPhoneNumber = PhoneNumberFormatter.stripFormatting(phoneNumber);
+        Hash.debugPhoneHash(cleanPhoneNumber);
+        Log.d("HomeActivity", "Searching for user with phone number: " + cleanPhoneNumber);
 
-        // Check if the user exists by phone number
-        checkIfUserExistsByPhoneNumber(cleanPhoneNumber);
+        // Use the UserController to find user
+        userController.findUserByPhoneNumber(
+                cleanPhoneNumber,
+                user -> {
+                    Log.d("HomeActivity", "User found: " + (user != null ? user.getName() : "null"));
+                    if (user != null) {
+                        startNewChatWithUser(user);
+                    } else {
+                        Toast.makeText(this,
+                                "User data is invalid",
+                                Toast.LENGTH_SHORT).show();
+                    }
+                },
+                e -> {
+                    Log.e("HomeActivity", "Error finding user: " + e.getMessage());
+                    Toast.makeText(this,
+                            "No user found with this phone number",
+                            Toast.LENGTH_SHORT).show();
+                }
+        );
     }
 
     private void startNewChatWithUser(User user) {
@@ -213,9 +197,15 @@ public class HomeActivity extends AppCompatActivity {
             Toast.makeText(this, "Invalid user data", Toast.LENGTH_SHORT).show();
             return;
         }
-        // Navigate to ChatActivity with the user details
+
+        // Make sure required fields are set for chat
+        if (user.getUserId() == null || user.getName() == null) {
+            Toast.makeText(this, "Incomplete user data", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         Intent intent = new Intent(this, ChatActivity.class);
-        intent.putExtra(Constants.KEY_USER, user); // Pass user object to ChatActivity
+        intent.putExtra(Constants.KEY_USER, user);
         startActivity(intent);
     }
 

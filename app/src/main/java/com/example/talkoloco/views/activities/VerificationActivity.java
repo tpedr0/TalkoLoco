@@ -11,6 +11,8 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.talkoloco.R;
 import com.example.talkoloco.controllers.AuthController;
+import com.example.talkoloco.controllers.KeyExchangeManager;
+import com.example.talkoloco.controllers.SignalEncryptionController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.PreferenceManager;
@@ -18,6 +20,8 @@ import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import org.signal.libsignal.protocol.state.PreKeyBundle;
 
 public class VerificationActivity extends AppCompatActivity {
     private EditText codeInput;
@@ -119,7 +123,7 @@ public class VerificationActivity extends AppCompatActivity {
         String savedUserId = preferenceManager.getString(Constants.KEY_USER_ID);
         Log.d(TAG, "Verified saved user ID from preferences: " + savedUserId);
 
-        // check if we're updating an existing user's phone number
+        // Check if we're updating an existing user's phone number
         if (isUpdating) {
             Intent resultIntent = new Intent();
             resultIntent.putExtra("phoneNumber", phoneNumber);
@@ -128,7 +132,38 @@ public class VerificationActivity extends AppCompatActivity {
             return;
         }
 
-        // check if user exists in Firestore
+        // Initialize encryption keys for the new user
+        try {
+            SignalEncryptionController encryptionController = SignalEncryptionController.getInstance(this);
+            KeyExchangeManager keyExchangeManager = new KeyExchangeManager();
+
+            // Generate initial PreKeyBundle
+            PreKeyBundle initialBundle = encryptionController.generatePreKeyBundle();
+
+            // Store the initial bundle
+            keyExchangeManager.storePreKeyBundle(
+                    userId,
+                    initialBundle,
+                    aVoid -> {
+                        Log.d(TAG, "Initial encryption keys stored successfully");
+                        // Continue with user existence check
+                        proceedWithUserCheck(userId);
+                    },
+                    e -> {
+                        Log.e(TAG, "Failed to store initial encryption keys", e);
+                        // Continue anyway as this isn't critical for first-time setup
+                        proceedWithUserCheck(userId);
+                    }
+            );
+        } catch (Exception e) {
+            Log.e(TAG, "Error initializing encryption", e);
+            // Continue with user check even if encryption setup fails
+            proceedWithUserCheck(userId);
+        }
+    }
+
+    private void proceedWithUserCheck(String userId) {
+        // Check if user exists in Firestore
         userController.checkIfUserExists(userId,
                 exists -> {
                     if (exists) {
