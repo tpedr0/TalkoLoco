@@ -332,9 +332,9 @@ public class ChatActivity extends AppCompatActivity {
             chatMessages = new ArrayList<>();
 
             // Safely handle the receiver's profile picture
-            Bitmap receiverBitmap = null;
+            Bitmap receiverBitmap = ImageHandler.decodeImage(receiverUser.getProfilePictureUrl());
             if (receiverUser != null && receiverUser.profilePictureUrl != null && !receiverUser.profilePictureUrl.isEmpty()) {
-                receiverBitmap = getBitmapFromEncodedString(receiverUser.profilePictureUrl);
+                binding.profilePic.setImageBitmap(receiverBitmap);
             }
 
             chatAdapter = new ChatAdapter(
