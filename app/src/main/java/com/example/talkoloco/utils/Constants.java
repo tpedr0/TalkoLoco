@@ -1,6 +1,7 @@
 package com.example.talkoloco.utils;
 
 public class Constants {
+
     // firebase collections
     public static final String KEY_COLLECTION_USERS = "users";
     public static final String KEY_COLLECTION_CHAT = "chats";
@@ -16,13 +17,22 @@ public class Constants {
     public static final String KEY_LAST_LOGIN = "lastLoginAt";
 
     // chat fields
+
+    public static final String KEY_USER = "user";
     public static final String KEY_SENDER_ID = "senderId";
     public static final String KEY_RECEIVER_ID = "receiverId";
     public static final String KEY_MESSAGE = "message";
     public static final String KEY_TIMESTAMP = "timestamp";
+    public static final String KEY_IMAGE = "image";
+
 
     // shared preferences
     public static final String KEY_PREFERENCE_NAME = "talkolocoPrefs";
     public static final String KEY_IS_SIGNED_IN = "isSignedIn";
+
+
+
+
+
 
 }

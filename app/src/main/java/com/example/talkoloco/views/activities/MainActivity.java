@@ -17,7 +17,11 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.R;
 import com.example.talkoloco.databinding.ActivityMainBinding;
+import com.example.talkoloco.models.User;
+import com.example.talkoloco.utils.Constants;
+import com.example.talkoloco.utils.PhoneNumberFormatter;
 import com.google.firebase.FirebaseApp;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthOptions;
@@ -25,8 +29,15 @@ import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException;
 import com.google.firebase.FirebaseTooManyRequestsException;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 // initializes initial phone number input and verification flow
@@ -35,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean isFormatting;
     private String lastFormatted = "";
     private FirebaseAuth mAuth;
+    private static final String TAG = "MainActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

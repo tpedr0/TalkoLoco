@@ -5,51 +5,90 @@
     app:layout_constraintTop_toTopOf="parent"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
->
 
-    <ImageView
-        android:id="@+id/profileIcon"
+
+    <View
+        android:id="@+id/viewBackground"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="16dp"
+        app:layout_constraintBottom_toTopOf="@+id/send_message"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0"
+        tools:layout_editor_absoluteX="39dp" />
+
+    <View
+        android:id="@+id/viewSupporter"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/white"
+        android:layout_marginTop="12dp"
+        app:layout_constraintTop_toBottomOf="@id/imageBack" />
+
+
+    <!-- Profile pic -->
+
+    <!-- Contact -->
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/imageBack"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginTop="64dp"
+        android:layout_marginEnd="372dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_back"
+        android:tint="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/profile_pic"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="344dp"
+        android:layout_margin="8dp"
+        android:layout_marginStart="44dp"
+        android:layout_marginTop="8dp"
         android:contentDescription="@string/profile_picture"
         android:src="@drawable/ic_pfp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.696" />
-
-    <TextView
-        android:id="@+id/contact"
-        android:layout_width="412dp"
-        android:layout_height="57dp"
-        android:background="@color/white"
-        android:padding="15dp"
-        android:paddingStart="40dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="8dp"
-        android:src="@drawable/ic_pfp"
-        android:text="@string/_1_350_454_2345"
-        android:textAlignment="center"
-        android:textColor="@color/black"
-        android:textSize="22sp"
-        android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
+        android:id="@+id/contact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:text="@string/_1_350_454_2345"
+        android:textColor="@color/black"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/profile_pic"
+        app:layout_constraintEnd_toStartOf="@id/chat_info"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/profile_pic" />
+
+    <!-- Chat Info -->
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/chat_info"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:layout_margin="15dp"
+        android:padding="5dp"
+        android:src="@drawable/round_dehaze_24"
+        app:tint="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
         android:id="@+id/date"
-        android:layout_width="411dp"
-        android:layout_height="56dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginTop="64dp"
         android:padding="15dp"
-        android:paddingStart="40dp"
-        android:paddingTop="8dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="8dp"
         android:text="@string/nov_11"
         android:textAlignment="center"
         android:textColor="@color/black"
@@ -77,87 +116,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <ImageView
-        android:layout_width="28dp"
-        android:layout_height="28dp"
-        android:layout_margin="15dp"
-        android:contentDescription="@string/app_name"
-        android:src="@drawable/round_dehaze_24"
-        app:tint="@color/black"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="358dp"
-        tools:layout_editor_absoluteY="16dp" />
 
-    <ImageView
-        android:layout_width="44dp"
-        android:layout_height="37dp"
-        android:layout_margin="15dp"
-        android:contentDescription="@string/app_name"
-        android:src="@drawable/ic_pfp"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="99dp"
-        tools:layout_editor_absoluteY="12dp" />
-
-    <TextView
-        android:id="@+id/messageSender"
-        android:layout_width="327dp"
-        android:layout_height="wrap_content"
-        android:background="@drawable/contact_chat"
-        android:hint="@string/this_is_my_outfit_for_later_i_m_very_excited"
-        android:inputType="textMultiLine"
-        android:padding="12dp"
-        android:scrollHorizontally="false"
-        android:textSize="16sp"
-        tools:ignore="MissingConstraints,TextViewEdits"
-        tools:layout_editor_absoluteX="60dp"
-        tools:layout_editor_absoluteY="230dp"/>
-
-    <TextView
-        android:id="@+id/messageReceiver"
-        android:layout_width="245dp"
-        android:layout_height="47dp"
-        android:background="@color/text_gray"
-        android:inputType="textMultiLine"
-        android:padding="12dp"
-        android:scrollHorizontally="false"
-        android:text="@string/dang_you_look_very_pretty"
-        android:textColor="@color/white"
-        android:textSize="16sp"
-        tools:ignore="MissingConstraints,TextViewEdits"
-        tools:layout_editor_absoluteX="91dp"
-        tools:layout_editor_absoluteY="476dp" />
-
-    <ImageView
-        android:id="@+id/profileIcon2"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_marginStart="12dp"
-        android:contentDescription="@string/profile_picture"
-        android:src="@drawable/ic_pfp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.336" />
-
-    <!-- Input field for new messages -->
-
-    <ImageView
-        android:id="@+id/imageSuggestion"
-        android:layout_width="203dp"
-        android:layout_height="154dp"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/chatRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
         android:orientation="vertical"
-        android:padding="12dp"
-        android:src="@drawable/image_attachment"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.298"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteY="276dp"
-        android:contentDescription="@string/randomdescription"/>
+        android:overScrollMode="never"
+        android:padding="20dp"
+        android:visibility="gone"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="@id/viewBackground"
+        app:layout_constraintTop_toBottomOf="@id/encryptionNotice"
+        app:stackFromEnd="true" />
+
+
+    <!-- -->
 
     <EditText
         android:id="@+id/messageInput"
-        android:layout_width="405dp"
+        android:layout_width="0dp"
         android:layout_height="34dp"
         android:layout_marginBottom="4dp"
         android:autofillHints=""
@@ -167,40 +146,30 @@
         android:inputType="text"
         android:textSize="15sp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintEnd_toStartOf="@id/send_message"
+        app:layout_constraintStart_toEndOf="@id/attachments"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp" />
 
-    <ImageView
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/send_message"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_margin="8dp"
+        android:background="#F5F5F5"
+        android:contentDescription="@string/camera"
+        android:src="@drawable/ic_send_message"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:src="@drawable/ic_add"
         android:id="@+id/attachments"
         android:layout_width="48dp"
         android:layout_height="48dp"
-        android:layout_marginStart="344dp"
-        android:contentDescription="@string/profile_picture"
-        android:src="@drawable/ic_pfp"
+        android:layout_margin="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.696" />
-
-    <ImageView
-        android:id="@+id/camera"
-        android:layout_width="60dp"
-        android:layout_height="43dp"
-        android:background="#F5F5F5"
-        android:contentDescription="@string/camera"
-        android:src="@drawable/ic_camera"
-        tools:layout_editor_absoluteX="352dp"
-        tools:layout_editor_absoluteY="693dp"
-        tools:ignore="MissingConstraints" />
-
-    <ImageView
-        android:layout_width="37dp"
-        android:layout_height="47dp"
-        android:src="@drawable/ic_add"
-        tools:layout_editor_absoluteX="3dp"
-        tools:layout_editor_absoluteY="689dp"
-        tools:ignore="MissingConstraints"
-        android:contentDescription="@string/randomdescription"/>
+        app:layout_constraintStart_toStartOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

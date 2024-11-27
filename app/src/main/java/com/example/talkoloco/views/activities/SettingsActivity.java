@@ -1,14 +1,11 @@
 package com.example.talkoloco.views.activities;
 
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -16,11 +13,8 @@ import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.Toast;
-import android.view.MotionEvent;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -36,6 +30,7 @@ import com.example.talkoloco.models.User;
 import com.example.talkoloco.models.UserStatus;
 import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.ImageHandler;
+import com.example.talkoloco.utils.PreferenceManager;
 import com.example.talkoloco.utils.ThemeManager;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.FirebaseException;
@@ -78,16 +73,16 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
         themeManager = ThemeManager.getInstance(this);
 
-        // Initialize controllers
+        // initialize controllers
         navigationController = new NavigationController(this);
         authController = AuthController.getInstance();
         userController = UserController.getInstance();
 
-        // Setup navigation
+        // setup nav
         navigationController.setupNavigation(binding.bottomNavigationView);
 
 
-        // Setup features
+        // setup features
         setupDeleteButton();
         setupNameEditing();
         setupPhoneEditing();
@@ -96,20 +91,20 @@ public class SettingsActivity extends AppCompatActivity {
         setupSignOutButton();
 
 
-        // Setup profile picture click
+        // setup profile picture click
         binding.profileIcon.setOnClickListener(v -> showProfilePictureOptions());
 
-        // Load user data
+        // load user data
         loadUserData();
     }
 
     private void setupDarkMode() {
-        // Update button icon based on current mode
+        // update button icon based on current mode
         binding.darkModeButton.setImageResource(
                 themeManager.isDarkMode() ? R.drawable.ic_light_mode : R.drawable.ic_dark_mode
         );
 
-        // Add click listener for toggling dark mode
+        // sdd click listener for toggling dark mode
         binding.darkModeButton.setOnClickListener(v -> {
             boolean newDarkMode = !themeManager.isDarkMode(); // Toggle the current mode
             themeManager.setDarkMode(newDarkMode);           // Save preference
@@ -120,7 +115,7 @@ public class SettingsActivity extends AppCompatActivity {
 
 
     private void setupStatusDropdown() {
-        // Initialize adapter with all statuses
+        // initialize adapter with all statuses
         statusAdapter = new ArrayAdapter<>(
                 this,
                 android.R.layout.simple_dropdown_item_1line,
@@ -128,7 +123,7 @@ public class SettingsActivity extends AppCompatActivity {
         );
         binding.statusDropdown.setAdapter(statusAdapter);
 
-        // Handle custom input
+        // handle custom input
         binding.statusDropdown.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 String newStatus = binding.statusDropdown.getText().toString().trim();
@@ -140,7 +135,7 @@ public class SettingsActivity extends AppCompatActivity {
             return false;
         });
 
-        // Handle item selection
+        // handle item selection
         binding.statusDropdown.setOnItemClickListener((parent, view, position, id) -> {
             String selectedStatus = parent.getItemAtPosition(position).toString();
             saveNewStatus(selectedStatus);
@@ -440,10 +435,10 @@ public class SettingsActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_fullscreen_image, null);
 
-        // Find the ImageView in the dialog layout
+        // find the ImageView in the dialog layout
         android.widget.ImageView fullscreenImageView = dialogView.findViewById(R.id.fullscreenImageView);
 
-        // Decode and set the image
+        // decode and set the image
         Bitmap profileBitmap = ImageHandler.decodeImage(currentUser.getProfilePictureUrl());
         if (profileBitmap != null) {
             fullscreenImageView.setImageBitmap(profileBitmap);
@@ -456,17 +451,17 @@ public class SettingsActivity extends AppCompatActivity {
 
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
-            // Make the dialog full screen
+            // make the dialog full screen
             dialog.getWindow().setLayout(
                     ViewGroup.LayoutParams.MATCH_PARENT,
                     ViewGroup.LayoutParams.MATCH_PARENT
             );
         }
 
-        // Dismiss dialog when clicking anywhere on the image
+        // dismiss dialog when clicking anywhere on the image
         dialogView.setOnClickListener(v -> dialog.dismiss());
 
-        // Set up close button if it exists in the layout
+        // set up close button
         View closeButton = dialogView.findViewById(R.id.closeButton);
         if (closeButton != null) {
             closeButton.setOnClickListener(v -> dialog.dismiss());
@@ -579,16 +574,30 @@ public class SettingsActivity extends AppCompatActivity {
                     user -> {
                         if (user != null) {
                             updateUI(user);
+                            // Get locally stored display number
+                            String displayNumber = userController.getDisplayPhoneNumber(this);
+                            binding.currentPhoneNumber.setText(displayNumber != null ?
+                                    displayNumber : "No phone number available");
                         }
                         binding.profileIcon.setAlpha(1.0f);
                     },
                     e -> {
                         Log.e(TAG, "Error loading user data", e);
-                        Toast.makeText(this,
-                                "Error loading user data", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Error loading user data", Toast.LENGTH_SHORT).show();
                         binding.profileIcon.setAlpha(1.0f);
                     }
             );
+        }
+
+        // Retrieve phone number from SharedPreferences
+        PreferenceManager preferenceManager = new PreferenceManager(this);
+        String displayPhoneNumber = preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
+
+        // Update the phone number field in the UI
+        if (displayPhoneNumber != null) {
+            binding.currentPhoneNumber.setText(displayPhoneNumber);
+        } else {
+            binding.currentPhoneNumber.setText("No phone number available");
         }
     }
 
@@ -596,7 +605,7 @@ public class SettingsActivity extends AppCompatActivity {
         try {
             this.currentUser = user;
 
-            // Set name if available
+            // sets name if available
             if (user.getName() != null) {
                 binding.nameInput.setText(user.getName());
                 Log.d(TAG, "Setting name: " + user.getName());
@@ -605,17 +614,17 @@ public class SettingsActivity extends AppCompatActivity {
             binding.nameInput.setFocusable(false);
             binding.nameInput.setClickable(true);
 
-            // Set phone number if available
+            // sets phone number if available
             Log.d(TAG, "Phone number from user object: " + user.getPhoneNumber());
             if (user.getPhoneNumber() != null) {
                 binding.currentPhoneNumber.setText(user.getPhoneNumber());
             } else {
-                // If not in Firestore, try getting it from Auth
+                // if not in Firestore, try getting it from Auth
                 String authPhoneNumber = authController.getCurrentUser();
                 Log.d(TAG, "Phone number from Auth: " + authPhoneNumber);
                 if (authPhoneNumber != null) {
                     binding.currentPhoneNumber.setText(authPhoneNumber);
-                    // Save the phone number to Firestore
+                    // save the phone number to Firestore
                     Map<String, Object> updates = new HashMap<>();
                     updates.put(Constants.KEY_PHONE_NUMBER, authPhoneNumber);
                     userController.updateFields(user.getUserId(), updates,
@@ -628,7 +637,7 @@ public class SettingsActivity extends AppCompatActivity {
             binding.currentPhoneNumber.setFocusable(false);
             binding.currentPhoneNumber.setClickable(true);
 
-            // Set status if available
+            // sets status if available
             Log.d(TAG, "Status from user object: " + user.getStatus());
             if (user.getStatus() != null) {
                 binding.statusDropdown.setText(user.getStatus(), false);
@@ -636,7 +645,7 @@ public class SettingsActivity extends AppCompatActivity {
                 binding.statusDropdown.setText(UserStatus.getDefaultStatuses().get(0), false);
             }
 
-            // Set profile picture if available
+            // sets profile picture if available
             if (user.getProfilePictureUrl() != null) {
                 Bitmap profileBitmap = ImageHandler.decodeImage(user.getProfilePictureUrl());
                 if (profileBitmap != null) {
@@ -668,15 +677,15 @@ public class SettingsActivity extends AppCompatActivity {
     private void saveNewStatus(String newStatus) {
         String userId = authController.getCurrentUserId();
         if (userId != null && currentUser != null) {
-            // Save to user status model
+            // save to user status model
             UserStatus.saveStatus(newStatus);
 
-            // Update adapter
+            // update adapter
             statusAdapter.clear();
             statusAdapter.addAll(UserStatus.getAllStatuses());
             statusAdapter.notifyDataSetChanged();
 
-            // Save to user profile
+            // save to user profile
             Map<String, Object> updates = new HashMap<>();
             updates.put(Constants.KEY_STATUS, newStatus);
 

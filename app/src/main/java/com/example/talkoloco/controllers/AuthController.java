@@ -13,7 +13,7 @@ import com.google.firebase.auth.PhoneAuthProvider;
 import java.util.concurrent.TimeUnit;
 
 /**
- * the AuthController class is a singleton controller that manages the Firebase Authentication-related operations.
+ * the AuthController class manages the Firebase Authentication-related operations.
  */
 public class AuthController {
     private final FirebaseAuth mAuth;
@@ -66,21 +66,7 @@ public class AuthController {
     }
 
     /**
-     * verifies the phone number with the provided code.
-     *
-     * @param verificationId         the verification ID
-     * @param code                   the verification code
-     * @param onCompleteListener the listener for the verification result
-     */
-    public void verifyPhoneNumberWithCode(String verificationId, String code,
-                                          OnCompleteListener<AuthResult> onCompleteListener) {
-        Log.d(TAG, "Verifying phone number with code");
-        PhoneAuthCredential credential = PhoneAuthProvider.getCredential(verificationId, code);
-        signInWithPhoneAuthCredential(credential, onCompleteListener);
-    }
-
-    /**
-     * Gets the current user's phone number
+     * gets the current user's phone number
      * @return the phone number or null if not available
      */
     public String getCurrentUser() {

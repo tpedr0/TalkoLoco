@@ -1,14 +1,17 @@
 package com.example.talkoloco.controllers;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.Constants;
+import com.example.talkoloco.utils.PreferenceManager;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
+import com.example.talkoloco.utils.Hash;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,30 +41,36 @@ public class UserController {
      * @param onSuccessListener the listener for the successful save operation
      * @param onFailureListener the listener for the failed save operation
      */
-    public void saveUser(User user, OnSuccessListener<Void> onSuccessListener,
+    public void saveUser(User user, Context context, OnSuccessListener<Void> onSuccessListener,
                          OnFailureListener onFailureListener) {
         if (user.getUserId() == null) {
             onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null"));
             return;
         }
 
-        // Get phone number from Auth if not set
-        if (user.getPhoneNumber() == null) {
-            String phoneNumber = AuthController.getInstance().getCurrentUser();
-            user.setPhoneNumber(phoneNumber);
+        // Hash the phone number for Firestore storage
+        String plainPhoneNumber = user.getPhoneNumber_display();
+        if (plainPhoneNumber != null) {
+            user.setPhoneNumber_hash(Hash.hashPhoneNumber(plainPhoneNumber));
+
+            // Save the plaintext phone number locally
+            PreferenceManager preferenceManager = new PreferenceManager(context);
+            preferenceManager.putString(Constants.KEY_PHONE_NUMBER, plainPhoneNumber);
         }
 
+        // Prepare Firestore data
         Map<String, Object> userData = new HashMap<>();
         userData.put(Constants.KEY_USER_ID, user.getUserId());
-        userData.put(Constants.KEY_PHONE_NUMBER, user.getPhoneNumber());
+        userData.put(Constants.KEY_PHONE_NUMBER, user.getPhoneNumber_hash()); // Store the hash
         userData.put(Constants.KEY_NAME, user.getName());
         userData.put(Constants.KEY_PROFILE_PICTURE, user.getProfilePictureUrl());
         userData.put(Constants.KEY_CREATED_AT, user.getCreatedAt());
         userData.put(Constants.KEY_LAST_LOGIN, user.getLastLoginAt());
 
+        // Save to Firestore
         db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(user.getUserId())
-                .set(userData)
+                .set(userData, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
                     Log.d(TAG, "User saved successfully");
                     onSuccessListener.onSuccess(aVoid);
@@ -70,6 +79,12 @@ public class UserController {
                     Log.e(TAG, "Error saving user", e);
                     onFailureListener.onFailure(e);
                 });
+    }
+
+
+    public String getDisplayPhoneNumber(Context context) {
+        PreferenceManager preferenceManager = new PreferenceManager(context);
+        return preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
     }
 
     /**

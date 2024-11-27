@@ -1,13 +1,21 @@
 package com.example.talkoloco.models;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
     private String phoneNumber;
-    private String name;
-    private String profilePictureUrl;
+
+    //changed from private to public so it can be accessed from the ChatActivity class
+    public String name;
+    public String profilePictureUrl;
     private String userId;
     private long createdAt;
     private long lastLoginAt;
     private String status;
+    private String phoneNumber_display;
+    private String phoneNumber_hash;
+
+    public String image, email, token, id;
 
 
     /**
@@ -35,8 +43,8 @@ public class User {
      *
      * @return the phone number of the user
      */
-    public String getPhoneNumber(){
-        return phoneNumber;
+    public String getPhoneNumber() {
+        return phoneNumber_display;
     }
 
     /**
@@ -45,7 +53,7 @@ public class User {
      * @param phoneNumber the new phone number of the user
      */
     public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
+        this.phoneNumber_display = phoneNumber;
     }
 
     /**
@@ -160,6 +168,22 @@ public class User {
 
     public String getStatus() {
         return status;
+    }
+
+    public String getPhoneNumber_display() {
+        return phoneNumber_display;
+    }
+
+    public void setPhoneNumber_display(String phoneNumber_display) {
+        this.phoneNumber_display = phoneNumber_display;
+    }
+
+    public String getPhoneNumber_hash() {
+        return phoneNumber_hash;
+    }
+
+    public void setPhoneNumber_hash(String phoneNumber_hash) {
+        this.phoneNumber_hash = phoneNumber_hash;
     }
 
 }

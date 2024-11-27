@@ -12,9 +12,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.talkoloco.R;
 import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.UserController;
+import com.example.talkoloco.utils.Constants;
+import com.example.talkoloco.utils.PreferenceManager;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class VerificationActivity extends AppCompatActivity {
     private EditText codeInput;
@@ -24,6 +27,7 @@ public class VerificationActivity extends AppCompatActivity {
     private String verificationId;
     private String phoneNumber;
     private boolean isUpdating;
+    private PreferenceManager preferenceManager;
     private static final String TAG = "VerificationActivity";
     private long lastResendTime = 0;
     private static final int RESEND_COOLDOWN_SECONDS = 30;
@@ -35,6 +39,7 @@ public class VerificationActivity extends AppCompatActivity {
 
         authController = AuthController.getInstance();
         userController = UserController.getInstance();
+        preferenceManager = new PreferenceManager(getApplicationContext());
 
         // Get verification ID and phone number from intent
         verificationId = getIntent().getStringExtra("verificationId");
@@ -105,6 +110,15 @@ public class VerificationActivity extends AppCompatActivity {
             return;
         }
 
+        // Save the user ID and phone number to preferences immediately
+        Log.d(TAG, "Saving user ID to preferences: " + userId);
+        preferenceManager.putString(Constants.KEY_USER_ID, userId);
+        preferenceManager.putString(Constants.KEY_PHONE_NUMBER, phoneNumber);
+
+        // Verify the save worked
+        String savedUserId = preferenceManager.getString(Constants.KEY_USER_ID);
+        Log.d(TAG, "Verified saved user ID from preferences: " + savedUserId);
+
         // check if we're updating an existing user's phone number
         if (isUpdating) {
             Intent resultIntent = new Intent();
@@ -118,12 +132,28 @@ public class VerificationActivity extends AppCompatActivity {
         userController.checkIfUserExists(userId,
                 exists -> {
                     if (exists) {
-                        // existing user go directly to Home
-                        Log.d(TAG, "Existing user found, proceeding to Home");
-                        navigateToHome();
+                        // For existing users, save their data to preferences
+                        FirebaseFirestore.getInstance()
+                                .collection(Constants.KEY_COLLECTION_USERS)
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    if (documentSnapshot.exists()) {
+                                        // Save the name if it exists
+                                        String name = documentSnapshot.getString(Constants.KEY_NAME);
+                                        if (name != null) {
+                                            preferenceManager.putString(Constants.KEY_NAME, name);
+                                        }
+                                    }
+                                    Log.d(TAG, "Navigating to Home with userId: " + userId);
+                                    navigateToHome();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Error fetching user data", e);
+                                    navigateToHome(); // Still proceed even if additional data fetch fails
+                                });
                     } else {
-                        // new user go to Profile Creation
-                        Log.d(TAG, "New user, proceeding to Profile Creation");
+                        Log.d(TAG, "New user, navigating to Profile Creation with userId: " + userId);
                         navigateToProfileCreation();
                     }
                 },

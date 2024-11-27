@@ -49,9 +49,12 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.messaging)
     implementation(libs.roundedimageview)
+    // implementation(libs.signal.protocol.java)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.databinding:viewbinding:8.2.0")
+    implementation ("com.makeramen:roundedimageview:2.3.0")
+
 }
