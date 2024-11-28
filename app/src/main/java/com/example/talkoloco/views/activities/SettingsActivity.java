@@ -147,26 +147,20 @@ public class SettingsActivity extends AppCompatActivity {
         binding.nameInput.setEnabled(false);
         binding.nameInput.setFocusable(false);
 
-        // Add touch listener to detect clicks on the edit icon
-        binding.nameInput.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_UP) {
-                // Check if touch was on the drawable end (edit icon)
-                if (event.getRawX() >= (binding.nameInput.getRight() - binding.nameInput.getCompoundDrawables()[2].getBounds().width())) {
-                    if (!isNameEditing) {
-                        binding.nameInput.setEnabled(true);
-                        binding.nameInput.setFocusableInTouchMode(true);
-                        binding.nameInput.setFocusable(true);
-                        binding.nameInput.requestFocus();
-                        binding.nameInput.setSelection(binding.nameInput.length());
-                        showKeyboard(binding.nameInput);
-                        isNameEditing = true;
-                    }
-                    return true;
-                }
+        //add touch listener to the edit icon
+        binding.editName.setOnClickListener(v -> {
+            if (!isNameEditing) {
+                //enable editing for nameInput
+                binding.nameInput.setEnabled(true);
+                binding.nameInput.setFocusableInTouchMode(true);
+                binding.nameInput.requestFocus();
+                binding.nameInput.setSelection(binding.nameInput.length()); // Move cursor to end
+                showKeyboard(binding.nameInput);
+                isNameEditing = true;
             }
-            return false;
         });
 
+        //save changes
         binding.nameInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveNameChanges();
@@ -175,6 +169,7 @@ public class SettingsActivity extends AppCompatActivity {
             return false;
         });
 
+        //save changes when the input loses focus
         binding.nameInput.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus && isNameEditing) {
                 saveNameChanges();
@@ -213,30 +208,28 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private void setupPhoneEditing() {
+        //disable editing for the phone number field
         binding.currentPhoneNumber.setEnabled(false);
         binding.currentPhoneNumber.setFocusable(false);
 
-        // Add touch listener to detect clicks on the edit icon
-        binding.currentPhoneNumber.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_UP) {
-                // Check if touch was on the drawable end (edit icon)
-                if (event.getRawX() >= (binding.currentPhoneNumber.getRight() - binding.currentPhoneNumber.getCompoundDrawables()[2].getBounds().width())) {
-                    if (!isPhoneEditing) {
-                        originalPhoneNumber = binding.currentPhoneNumber.getText().toString();
-                        binding.currentPhoneNumber.setEnabled(true);
-                        binding.currentPhoneNumber.setFocusableInTouchMode(true);
-                        binding.currentPhoneNumber.setFocusable(true);
-                        binding.currentPhoneNumber.requestFocus();
-                        binding.currentPhoneNumber.setSelection(binding.currentPhoneNumber.length());
-                        showKeyboard(binding.currentPhoneNumber);
-                        isPhoneEditing = true;
-                    }
-                    return true;
-                }
+        //add click listener to the edit icon (was switched from touch listener)
+        binding.editNumber.setOnClickListener(v -> {
+            if (!isPhoneEditing) {
+                //save original phone number
+                originalPhoneNumber = binding.currentPhoneNumber.getText().toString();
+
+                //enable editing for the phone number field
+                binding.currentPhoneNumber.setEnabled(true);
+                binding.currentPhoneNumber.setFocusableInTouchMode(true);
+                binding.currentPhoneNumber.requestFocus();
+                binding.currentPhoneNumber.setSelection(binding.currentPhoneNumber.length()); // Move cursor to end
+                showKeyboard(binding.currentPhoneNumber);
+
+                isPhoneEditing = true;
             }
-            return false;
         });
 
+        //save the phone number
         binding.currentPhoneNumber.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 verifyAndSavePhoneNumber();
@@ -245,6 +238,7 @@ public class SettingsActivity extends AppCompatActivity {
             return false;
         });
 
+        //save the phone number when field loses focus
         binding.currentPhoneNumber.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus && isPhoneEditing) {
                 verifyAndSavePhoneNumber();
