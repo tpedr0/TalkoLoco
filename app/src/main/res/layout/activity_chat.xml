@@ -42,7 +42,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <androidx.appcompat.widget.AppCompatImageView
+    <com.makeramen.roundedimageview.RoundedImageView
         android:id="@+id/profile_pic"
         android:layout_width="48dp"
         android:layout_height="48dp"
@@ -51,6 +51,8 @@
         android:layout_marginTop="8dp"
         android:contentDescription="@string/profile_picture"
         android:src="@drawable/ic_pfp"
+        android:scaleType="centerCrop"
+        app:riv_oval="true"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
