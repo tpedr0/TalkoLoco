@@ -37,6 +37,7 @@
         android:id="@+id/homeChats"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:layout_marginTop="52dp"
         android:gravity="center"
         android:orientation="vertical"
         android:paddingTop="19dp"
