@@ -16,28 +16,36 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.talkoloco.R;
+import com.example.talkoloco.adapters.UsersAdapter;
 import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.NavigationController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityHomeBinding;
+import com.example.talkoloco.listeners.UserListener;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.Hash;
 import com.example.talkoloco.utils.PhoneNumberFormatter;
+import com.example.talkoloco.utils.PreferenceManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
-public class HomeActivity extends AppCompatActivity {
+import java.util.ArrayList;
+import java.util.List;
+
+public class HomeActivity extends AppCompatActivity implements UserListener {
     private ActivityHomeBinding binding;
     private NavigationController navigationController;
     private AuthController authController;
     private UserController userController;
+    private PreferenceManager preferenceManager;
     private static final String TAG = "HomeActivity";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityHomeBinding.inflate(getLayoutInflater());
+        preferenceManager = new PreferenceManager(getApplicationContext());
         setContentView(binding.getRoot());
 
 
@@ -52,6 +60,7 @@ public class HomeActivity extends AppCompatActivity {
         // setup click listeners for new chat
         binding.addChatIcon.setOnClickListener(v -> showNewChatDialog());
         binding.startMessaging.setOnClickListener(v -> showNewChatDialog());
+        getUsers();
     }
 
     private void showNewChatDialog() {
@@ -224,5 +233,50 @@ public class HomeActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         binding = null;
+    }
+
+    private void getUsers(){
+        FirebaseFirestore database = FirebaseFirestore.getInstance();
+        database.collection(Constants.KEY_COLLECTION_USERS).get()
+                .addOnCompleteListener(task -> {
+                    String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
+                    if(task.isSuccessful() && task.getResult() !=null){
+                        List<User> users = new ArrayList<>();
+                        for(QueryDocumentSnapshot queryDocumentSnapshot : task.getResult()){
+                            if(currentUserId.equals(queryDocumentSnapshot.getId())){
+                                continue;
+                            }
+                            User user = new User();
+                            user.name = queryDocumentSnapshot.getString(Constants.KEY_NAME);
+                            user.image = queryDocumentSnapshot.getString(Constants.KEY_IMAGE);
+                            user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
+                            user.id = queryDocumentSnapshot.getId();
+                            users.add(user);
+                        }
+                        if(!users.isEmpty()){
+                            UsersAdapter usersAdapter = new UsersAdapter(users,this,binding.getRoot().getContext());
+                            binding.userRecycleView.setAdapter(usersAdapter);
+                            binding.userRecycleView.setVisibility(View.VISIBLE);
+                        } else {
+                            showErrorMessage();
+                        }
+                    }else {
+                        showErrorMessage();
+                    }
+                });
+
+    }
+
+    private void showErrorMessage(){
+        Toast.makeText(this,
+                "No users found :(",
+                Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onUserClicked(User user) {
+        Intent intent = new Intent(this, ChatActivity.class);
+        intent.putExtra(Constants.KEY_USER,user);
+        startActivity(intent);
     }
 }

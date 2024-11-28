@@ -13,6 +13,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.talkoloco.R;
 import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
@@ -93,6 +94,20 @@ public class ProfileCreationActivity extends AppCompatActivity {
             if (selectedImageUri != null) {
                 try {
                     String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
+                    if (ImageHandler.isImageSizeValid(encodedImage)) {
+                        newUser.setProfilePictureUrl(encodedImage);
+                    } else {
+                        Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } else {
+                try {
+                    Uri defaultUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.drawable.default_pfp);
+                    String encodedImage = ImageHandler.encodeImage(this, defaultUri);
                     if (ImageHandler.isImageSizeValid(encodedImage)) {
                         newUser.setProfilePictureUrl(encodedImage);
                     } else {
