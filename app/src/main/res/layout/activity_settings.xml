@@ -103,10 +103,22 @@
         android:focusable="false"
         android:clickable="true"
         android:longClickable="true"
-        android:drawableEnd="@drawable/ic_edit"
         android:drawablePadding="8dp"
         android:imeOptions="actionDone"
-        app:layout_constraintTop_toBottomOf="@id/nameLabel"/>
+        app:layout_constraintTop_toBottomOf="@id/nameLabel"
+        app:layout_constraintStart_toStartOf="parent"
+        />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/editName"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@drawable/ic_edit"
+        app:tint="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/nameInput"
+        app:layout_constraintBottom_toBottomOf="@id/nameInput"
+       />
 
     <TextView
         android:id="@+id/phoneNumTitle"
@@ -128,7 +140,7 @@
         android:background="@drawable/edit_text_background"
         app:layout_constraintTop_toBottomOf="@id/phoneNumTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/edit_number"
         android:hint="@string/current_phone_number"
         android:textSize="18sp"
         android:maxLength="17"
@@ -136,10 +148,20 @@
         android:focusable="false"
         android:clickable="true"
         android:longClickable="true"
-        android:drawableEnd="@drawable/ic_edit"
         android:drawablePadding="8dp"
         android:imeOptions="actionDone"
         android:inputType="phone"/>
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/edit_number"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:src="@drawable/ic_edit"
+        app:tint="@color/black"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/currentPhoneNumber"
+        app:layout_constraintBottom_toBottomOf="@id/currentPhoneNumber"
+        />
 
     <TextView
         android:id="@+id/aboutTitle"
