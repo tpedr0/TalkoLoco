@@ -81,6 +81,32 @@ public class UserController {
                 });
     }
 
+    public void doesPhoneNumberExist(String phoneNumber, OnSuccessListener<Boolean> onSuccess, OnFailureListener onFailure) {
+        FirebaseFirestore.getInstance()
+                .collection(Constants.KEY_COLLECTION_USERS)
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    onSuccess.onSuccess(!querySnapshot.isEmpty());
+                })
+                .addOnFailureListener(onFailure);
+    }
+
+    public void createDummyUser(String phoneNumber, OnSuccessListener<Void> onSuccessListener, OnFailureListener onFailureListener) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        Map<String, Object> dummyUser = new HashMap<>();
+        dummyUser.put("phoneNumber", phoneNumber);
+        dummyUser.put("name", "Dummy User");
+
+        db.collection("dummy_users")
+                .add(dummyUser)
+                .addOnSuccessListener(documentReference -> onSuccessListener.onSuccess(null))
+                .addOnFailureListener(onFailureListener);
+    }
+
+
+
 
     public String getDisplayPhoneNumber(Context context) {
         PreferenceManager preferenceManager = new PreferenceManager(context);
