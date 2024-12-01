@@ -43,6 +43,10 @@
             android:exported="false"
             android:theme="@style/Theme.TalkoLoco"/>
 
+        <activity android:name=".views.activities.FriendsListActivity"
+            android:exported="false"
+            android:theme="@style/Theme.TalkoLoco"/>
+
         <activity
             android:name=".views.activities.actDropDownSettings"
             android:exported="false"

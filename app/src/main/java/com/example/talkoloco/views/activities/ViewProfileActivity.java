@@ -51,11 +51,11 @@ public class ViewProfileActivity extends AppCompatActivity {
         Bitmap profileBitmap = ImageHandler.decodeImage(viewedUser.getProfilePictureUrl());
         if (viewedUser != null && viewedUser.profilePictureUrl != null && !viewedUser.profilePictureUrl.isEmpty()) {
             binding.profileIcon.setImageBitmap(profileBitmap);
-            binding.aboutOutput.setText(viewedUser.getStatus());
         }
 
         if (viewedUser != null) {
             binding.nameOutput.setText(viewedUser.getName());
+            binding.aboutOutput.setText(viewedUser.getStatus());
         } else {
             Toast.makeText(this, "User details not found", Toast.LENGTH_SHORT).show();
             finish(); // Close the activity if no user details are found
