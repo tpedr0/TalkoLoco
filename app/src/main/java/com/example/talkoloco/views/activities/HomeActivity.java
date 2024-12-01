@@ -32,7 +32,6 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.example.talkoloco.utils.PreferenceManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -266,7 +265,9 @@ public class HomeActivity extends AppCompatActivity implements UserListener {
                             user.image = queryDocumentSnapshot.getString(Constants.KEY_IMAGE);
                             user.profilePictureUrl = queryDocumentSnapshot.getString(Constants.KEY_IMAGE);
                             user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
+                            user.setPublicKey(queryDocumentSnapshot.getString(Constants.KEY_PUBLIC_KEY));
                             user.id = queryDocumentSnapshot.getId();
+                            user.setStatus(queryDocumentSnapshot.getString(Constants.KEY_STATUS));
                             users.add(user);
                         }
                         if(!users.isEmpty()){
