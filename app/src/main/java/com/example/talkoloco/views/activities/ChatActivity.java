@@ -384,6 +384,8 @@ public class ChatActivity extends AppCompatActivity {
         binding.sendMessage.setOnClickListener(v-> sendMessages());
 
         binding.attachments.setOnClickListener(v -> openImagePicker());
+
+        binding.profilePic.setOnClickListener(v -> viewProfile(receiverUser));
     }
 
     private void openImagePicker() {
@@ -395,5 +397,11 @@ public class ChatActivity extends AppCompatActivity {
     private String getReadableDateTime(Date date) {
         return new SimpleDateFormat("MMMM dd, yyyy - hh:mm a",
                 Locale.getDefault()).format(date);
+    }
+
+    private void viewProfile(User user){
+        Intent intent = new Intent(this, ViewProfileActivity.class);
+        intent.putExtra(Constants.KEY_USER,user);
+        startActivity(intent);
     }
 }
