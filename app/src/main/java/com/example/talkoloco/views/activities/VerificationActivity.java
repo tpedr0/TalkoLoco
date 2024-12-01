@@ -19,6 +19,8 @@ import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import org.signal.libsignal.protocol.state.PreKeyBundle;
+
 public class VerificationActivity extends AppCompatActivity {
     private EditText codeInput;
     private TextView instructionsText;
@@ -127,8 +129,45 @@ public class VerificationActivity extends AppCompatActivity {
             finish();
             return;
         }
-
         // check if user exists in Firestore
+        userController.checkIfUserExists(userId,
+                exists -> {
+                    if (exists) {
+                        // For existing users, save their data to preferences
+                        FirebaseFirestore.getInstance()
+                                .collection(Constants.KEY_COLLECTION_USERS)
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    if (documentSnapshot.exists()) {
+                                        // Save the name if it exists
+                                        String name = documentSnapshot.getString(Constants.KEY_NAME);
+                                        if (name != null) {
+                                            preferenceManager.putString(Constants.KEY_NAME, name);
+                                        }
+                                    }
+                                    Log.d(TAG, "Navigating to Home with userId: " + userId);
+                                    navigateToHome();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Error fetching user data", e);
+                                    navigateToHome(); // Still proceed even if additional data fetch fails
+                                });
+                    } else {
+                        Log.d(TAG, "New user, navigating to Profile Creation with userId: " + userId);
+                        navigateToProfileCreation();
+                    }
+                },
+                e -> {
+                    Log.e(TAG, "Error checking user existence", e);
+                    Toast.makeText(this, "Error verifying user status", Toast.LENGTH_SHORT).show();
+                    onVerificationFailed();
+                });
+    }
+
+
+    private void proceedWithUserCheck(String userId) {
+        // Check if user exists in Firestore
         userController.checkIfUserExists(userId,
                 exists -> {
                     if (exists) {

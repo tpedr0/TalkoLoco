@@ -34,4 +34,6 @@
     <string name="delete_account">Delete Account</string>
     <string name="create_new_chat">Create new chat</string>
     <string name="sign_out">Sign out</string>
+    <string name="no_status_available">No status available</string>
+    <string name="friends_list">Friends List</string>
 </resources>

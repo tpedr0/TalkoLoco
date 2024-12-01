@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:title="@string/communities"
+    <item android:title="@string/friends_list"
         android:icon="@drawable/ic_communities"
-        android:id="@+id/communities"/>
+        android:id="@+id/friendsList"/>
     <item android:title="@string/chats"
         android:icon="@drawable/ic_chats"
         android:id="@+id/chats"/>

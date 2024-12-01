@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,13 +31,17 @@ import com.example.talkoloco.databinding.ActivitySettingsBinding;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.models.UserStatus;
 import com.example.talkoloco.utils.Constants;
+import com.example.talkoloco.utils.Hash;
 import com.example.talkoloco.utils.ImageHandler;
 import com.example.talkoloco.utils.PreferenceManager;
 import com.example.talkoloco.utils.ThemeManager;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.firebase.FirebaseException;
 import com.google.firebase.auth.PhoneAuthCredential;
 import com.google.firebase.auth.PhoneAuthProvider;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -142,31 +148,24 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
-
     private void setupNameEditing() {
         binding.nameInput.setEnabled(false);
         binding.nameInput.setFocusable(false);
 
-        // Add touch listener to detect clicks on the edit icon
-        binding.nameInput.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_UP) {
-                // Check if touch was on the drawable end (edit icon)
-                if (event.getRawX() >= (binding.nameInput.getRight() - binding.nameInput.getCompoundDrawables()[2].getBounds().width())) {
-                    if (!isNameEditing) {
-                        binding.nameInput.setEnabled(true);
-                        binding.nameInput.setFocusableInTouchMode(true);
-                        binding.nameInput.setFocusable(true);
-                        binding.nameInput.requestFocus();
-                        binding.nameInput.setSelection(binding.nameInput.length());
-                        showKeyboard(binding.nameInput);
-                        isNameEditing = true;
-                    }
-                    return true;
-                }
+        //add touch listener to the edit icon
+        binding.editName.setOnClickListener(v -> {
+            if (!isNameEditing) {
+                //enable editing for nameInput
+                binding.nameInput.setEnabled(true);
+                binding.nameInput.setFocusableInTouchMode(true);
+                binding.nameInput.requestFocus();
+                binding.nameInput.setSelection(binding.nameInput.length()); // Move cursor to end
+                showKeyboard(binding.nameInput);
+                isNameEditing = true;
             }
-            return false;
         });
 
+        //save changes
         binding.nameInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 saveNameChanges();
@@ -175,6 +174,7 @@ public class SettingsActivity extends AppCompatActivity {
             return false;
         });
 
+        //save changes when the input loses focus
         binding.nameInput.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus && isNameEditing) {
                 saveNameChanges();
@@ -212,31 +212,64 @@ public class SettingsActivity extends AppCompatActivity {
         isNameEditing = false;
     }
 
+    // Adjusted code and reused some code from HomeActivity.java
     private void setupPhoneEditing() {
+        // Disable editing for the phone number field initially
         binding.currentPhoneNumber.setEnabled(false);
         binding.currentPhoneNumber.setFocusable(false);
 
-        // Add touch listener to detect clicks on the edit icon
-        binding.currentPhoneNumber.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_UP) {
-                // Check if touch was on the drawable end (edit icon)
-                if (event.getRawX() >= (binding.currentPhoneNumber.getRight() - binding.currentPhoneNumber.getCompoundDrawables()[2].getBounds().width())) {
-                    if (!isPhoneEditing) {
-                        originalPhoneNumber = binding.currentPhoneNumber.getText().toString();
-                        binding.currentPhoneNumber.setEnabled(true);
-                        binding.currentPhoneNumber.setFocusableInTouchMode(true);
-                        binding.currentPhoneNumber.setFocusable(true);
-                        binding.currentPhoneNumber.requestFocus();
-                        binding.currentPhoneNumber.setSelection(binding.currentPhoneNumber.length());
-                        showKeyboard(binding.currentPhoneNumber);
-                        isPhoneEditing = true;
-                    }
-                    return true;
-                }
+        // Add click listener to the edit icon
+        binding.editNumber.setOnClickListener(v -> {
+            if (!isPhoneEditing) {
+                // Save the original phone number
+                originalPhoneNumber = binding.currentPhoneNumber.getText().toString();
+
+                // Enable editing for the phone number field
+                binding.currentPhoneNumber.setEnabled(true);
+                binding.currentPhoneNumber.setFocusableInTouchMode(true);
+                binding.currentPhoneNumber.requestFocus();
+                binding.currentPhoneNumber.setSelection(binding.currentPhoneNumber.length()); // Move cursor to end
+                showKeyboard(binding.currentPhoneNumber);
+
+                isPhoneEditing = true;
             }
-            return false;
         });
 
+        // Add text change listener for phone number formatting and validation
+        binding.currentPhoneNumber.addTextChangedListener(new TextWatcher() {
+            private boolean isFormatting;
+            private String lastFormatted = "";
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            public void afterTextChanged(Editable s) {
+                if (isFormatting) return;
+                isFormatting = true;
+
+                // Format and validate phone number
+                String formattedNumber = formatAndValidatePhoneNumber(s.toString());
+                if (!formattedNumber.equals(lastFormatted)) {
+                    lastFormatted = formattedNumber;
+                    s.replace(0, s.length(), formattedNumber);
+                }
+
+                // Enable save button if the phone number is valid
+                boolean isValid = isPhoneNumberValid(formattedNumber);
+                if (!isValid && formattedNumber.length() > 3) {
+                    binding.currentPhoneNumber.setError("Enter a valid phone number");
+                } else {
+                    binding.currentPhoneNumber.setError(null);
+                }
+
+                isFormatting = false;
+            }
+        });
+
+        // Save the phone number when the "Done" action is triggered
         binding.currentPhoneNumber.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 verifyAndSavePhoneNumber();
@@ -245,6 +278,7 @@ public class SettingsActivity extends AppCompatActivity {
             return false;
         });
 
+        // Save the phone number when the input field loses focus
         binding.currentPhoneNumber.setOnFocusChangeListener((v, hasFocus) -> {
             if (!hasFocus && isPhoneEditing) {
                 verifyAndSavePhoneNumber();
@@ -252,81 +286,156 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Formats and validates a phone number.
+     *
+     * @param input Raw phone number input from the user.
+     * @return Formatted phone number.
+     */
+    private String formatAndValidatePhoneNumber(String input) {
+        // Remove all non-digit characters
+        String digits = input.replaceAll("[^\\d]", "");
+
+        // Ensure we start with a country code
+        if (!digits.startsWith("1")) {
+            digits = "1" + digits;
+        }
+
+        // Limit to exactly 11 digits (including country code)
+        if (digits.length() > 11) {
+            digits = digits.substring(0, 11);
+        }
+
+        // Format the number
+        StringBuilder formatted = new StringBuilder("+1 ");
+        if (digits.length() > 1) {
+            String remaining = digits.substring(1); // Remove country code
+            if (remaining.length() > 0) {
+                formatted.append("(").append(remaining.substring(0, Math.min(3, remaining.length())));
+
+                if (remaining.length() > 3) {
+                    formatted.append(") ").append(remaining.substring(3, Math.min(6, remaining.length())));
+
+                    if (remaining.length() > 6) {
+                        formatted.append("-").append(remaining.substring(6, Math.min(10, remaining.length())));
+                    }
+                }
+            }
+        }
+        return formatted.toString();
+    }
+
+    /**
+     * Checks if the formatted phone number is valid.
+     *
+     * @param phoneNumber Formatted phone number.
+     * @return True if the phone number is valid, false otherwise.
+     */
+    private boolean isPhoneNumberValid(String phoneNumber) {
+        String digits = phoneNumber.replaceAll("[^\\d]", "");
+        return digits.length() == 11; // Ensure it's exactly 11 digits
+    }
+
+
+
     private void verifyAndSavePhoneNumber() {
         String newPhoneNumber = binding.currentPhoneNumber.getText().toString().trim();
 
-        if (!newPhoneNumber.equals(originalPhoneNumber)) {
-            // Show verification dialog
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Verify New Phone Number")
-                    .setMessage("To change your phone number, you'll need to verify the new number. Would you like to proceed?")
-                    .setPositiveButton("Verify", (dialog, which) -> {
-                        startPhoneVerification(newPhoneNumber);
-                    })
-                    .setNegativeButton("Cancel", (dialog, which) -> {
-                        // Revert to original number
+        if (!isPhoneNumberValid(newPhoneNumber)) {
+            Toast.makeText(this, "Please enter a valid phone number.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Hash the phone number before checking existence
+        String hashedPhoneNumber = Hash.hashPhoneNumber(newPhoneNumber);
+
+        FirebaseFirestore.getInstance()
+                .collection("users") // Replace with your actual Firestore collection name
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    // Check if any documents are returned with the same hashed phone number
+                    if (!querySnapshot.isEmpty()) {
+                        Toast.makeText(this, "This phone number is already in use by another user.", Toast.LENGTH_SHORT).show();
                         binding.currentPhoneNumber.setText(originalPhoneNumber);
                         resetPhoneEditState();
-                    })
-                    .setCancelable(false);
-
-            AlertDialog dialog = builder.create();
-            if (dialog.getWindow() != null) {
-                dialog.getWindow().setBackgroundDrawableResource(R.drawable.dialog_background);
-            }
-            dialog.show();
-        } else {
-            resetPhoneEditState();
-        }
+                    } else {
+                        // Proceed with updating the hashed phone number
+                        updateUserPhoneNumber(newPhoneNumber);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error checking phone number existence.", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error checking phone number existence", e);
+                });
     }
 
+
+
     private void startPhoneVerification(String newPhoneNumber) {
-        // Format phone number if needed
         String formattedPhoneNumber = formatPhoneNumber(newPhoneNumber);
 
-        // Start verification process using AuthController
         authController.startPhoneNumberVerification(
                 formattedPhoneNumber,
                 this,
                 new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                     @Override
                     public void onVerificationCompleted(PhoneAuthCredential credential) {
-                        // Usually won't be called since we're using manual code verification
+                        // Handle auto-verification (if applicable)
                     }
 
                     @Override
                     public void onVerificationFailed(FirebaseException e) {
                         Log.e(TAG, "Phone verification failed", e);
-                        Toast.makeText(SettingsActivity.this,
-                                "Verification failed. Please try again.",
-                                Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SettingsActivity.this, "Verification failed. Please try again.", Toast.LENGTH_SHORT).show();
                         binding.currentPhoneNumber.setText(originalPhoneNumber);
                         resetPhoneEditState();
                     }
 
                     @Override
                     public void onCodeSent(String verificationId, PhoneAuthProvider.ForceResendingToken token) {
-                        // Launch VerificationActivity with the necessary data
-                        Intent intent = new Intent(SettingsActivity.this, VerificationActivity.class);
-                        intent.putExtra("verificationId", verificationId);
-                        intent.putExtra("phoneNumber", formattedPhoneNumber);
-                        intent.putExtra("isUpdating", true); // Flag to indicate this is a number update
-                        startActivityForResult(intent, VERIFY_PHONE_REQUEST);
+                        // Create dummy user before verification
+                        userController.createDummyUser(newPhoneNumber,
+                                aVoid -> {
+                                    Log.d(TAG, "Dummy user created successfully");
+                                    Intent intent = new Intent(SettingsActivity.this, VerificationActivity.class);
+                                    intent.putExtra("verificationId", verificationId);
+                                    intent.putExtra("phoneNumber", formattedPhoneNumber);
+                                    intent.putExtra("isUpdating", true);
+                                    startActivityForResult(intent, VERIFY_PHONE_REQUEST);
+                                },
+                                e -> {
+                                    Log.e(TAG, "Failed to create dummy user", e);
+                                    Toast.makeText(SettingsActivity.this, "Failed to create dummy user.", Toast.LENGTH_SHORT).show();
+                                }
+                        );
                     }
                 }
         );
     }
 
+
+
+
     private void updateUserPhoneNumber(String newPhoneNumber) {
         String userId = authController.getCurrentUserId();
         if (userId != null && currentUser != null) {
+            // Hash the phone number before saving
+            String hashedPhoneNumber = Hash.hashPhoneNumber(newPhoneNumber);
+
             Map<String, Object> updates = new HashMap<>();
-            updates.put(Constants.KEY_PHONE_NUMBER, newPhoneNumber);
+            updates.put(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber);
 
             userController.updateFields(userId, updates,
                     aVoid -> {
                         Toast.makeText(this, "Phone number updated successfully", Toast.LENGTH_SHORT).show();
-                        currentUser.setPhoneNumber(newPhoneNumber);
+
+                        // Update the local user and original phone number
+                        currentUser.setPhoneNumber(hashedPhoneNumber);
+                        originalPhoneNumber = hashedPhoneNumber; // Sync immediately after successful update
+
+                        // Reset editing state
+                        resetPhoneEditState();
                     },
                     e -> {
                         Toast.makeText(this, "Failed to update phone number", Toast.LENGTH_SHORT).show();
@@ -337,6 +446,11 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+
+
+
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -345,18 +459,33 @@ public class SettingsActivity extends AppCompatActivity {
             if (resultCode == RESULT_OK) {
                 // Phone verification was successful, update the user's phone number
                 String newPhoneNumber = binding.currentPhoneNumber.getText().toString().trim();
+
+                // Update the phone number in Firebase
                 updateUserPhoneNumber(newPhoneNumber);
+
+                // Sync the original phone number to prevent further verification prompts
+                originalPhoneNumber = newPhoneNumber;
+
+                // Reset editing state
+                resetPhoneEditState();
             } else {
                 // Verification was cancelled or failed
                 binding.currentPhoneNumber.setText(originalPhoneNumber);
                 Toast.makeText(this, "Phone number update cancelled", Toast.LENGTH_SHORT).show();
+                resetPhoneEditState();
             }
-            resetPhoneEditState();
         }
+    }
+    private void resetPhoneEditState() {
+        binding.currentPhoneNumber.setEnabled(false);
+        binding.currentPhoneNumber.setFocusable(false);
+        binding.currentPhoneNumber.setFocusableInTouchMode(false);
+        hideKeyboard();
+        isPhoneEditing = false;
     }
 
     private void updatePhoneNumber(String newPhoneNumber) {
-        String userId = authController.getCurrentUserId();
+        String userId = authController.getCurrentUserId(); // Retrieve userId from AuthController
         if (userId != null) {
             userController.updatePhoneNumber(userId, newPhoneNumber,
                     aVoid -> {
@@ -373,6 +502,7 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+
     private String formatPhoneNumber(String phoneNumber) {
         // Remove any non-digit characters
         String digitsOnly = phoneNumber.replaceAll("[^0-9]", "");
@@ -386,13 +516,7 @@ public class SettingsActivity extends AppCompatActivity {
         return digitsOnly;
     }
 
-    private void resetPhoneEditState() {
-        binding.currentPhoneNumber.setEnabled(false);
-        binding.currentPhoneNumber.setFocusable(false);
-        binding.currentPhoneNumber.setFocusableInTouchMode(false);
-        hideKeyboard();
-        isPhoneEditing = false;
-    }
+
 
     private void showProfilePictureOptions() {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
@@ -720,4 +844,5 @@ public class SettingsActivity extends AppCompatActivity {
     private void showLogoutToast() {
         Toast.makeText(SettingsActivity.this, "Successfully logged out", Toast.LENGTH_SHORT).show();
     }
+
 }

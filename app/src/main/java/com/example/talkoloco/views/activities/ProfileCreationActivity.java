@@ -13,11 +13,13 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.talkoloco.R;
 import com.example.talkoloco.controllers.AuthController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.ImageHandler;
+import com.example.talkoloco.utils.KeyManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 
@@ -82,17 +84,36 @@ public class ProfileCreationActivity extends AppCompatActivity {
     private void onDoneClick() {
         String name = binding.nameInput.getText().toString().trim();
         String userId = authController.getCurrentUserId();
-        String phoneNumber = authController.getCurrentUser(); // Get phone from Auth
+        String phoneNumber = authController.getCurrentUser();
 
         if (userId != null && !name.isEmpty()) {
             User newUser = new User();
             newUser.setUserId(userId);
             newUser.setName(name);
-            newUser.setPhoneNumber(phoneNumber); // Set phone number
+            newUser.setPhoneNumber(phoneNumber);
+
+            // Generate encryption keys
+            KeyManager keyManager = new KeyManager(this);
+            String publicKey = keyManager.generateUserKeys();  // This will also save the private key
+            newUser.setPublicKey(publicKey);
 
             if (selectedImageUri != null) {
                 try {
                     String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
+                    if (ImageHandler.isImageSizeValid(encodedImage)) {
+                        newUser.setProfilePictureUrl(encodedImage);
+                    } else {
+                        Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                } catch (Exception e) {
+                    Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            } else {
+                try {
+                    Uri defaultUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.drawable.default_pfp);
+                    String encodedImage = ImageHandler.encodeImage(this, defaultUri);
                     if (ImageHandler.isImageSizeValid(encodedImage)) {
                         newUser.setProfilePictureUrl(encodedImage);
                     } else {

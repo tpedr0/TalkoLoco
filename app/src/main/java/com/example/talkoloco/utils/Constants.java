@@ -17,19 +17,28 @@ public class Constants {
     public static final String KEY_LAST_LOGIN = "lastLoginAt";
 
     // chat fields
-
     public static final String KEY_USER = "user";
     public static final String KEY_SENDER_ID = "senderId";
     public static final String KEY_RECEIVER_ID = "receiverId";
     public static final String KEY_MESSAGE = "message";
     public static final String KEY_TIMESTAMP = "timestamp";
-    public static final String KEY_IMAGE = "image";
+    public static final String KEY_IMAGE = "profilePictureUrl";
 
 
     // shared preferences
     public static final String KEY_PREFERENCE_NAME = "talkolocoPrefs";
     public static final String KEY_IS_SIGNED_IN = "isSignedIn";
 
+    // New constants for encryption
+    public static final String KEY_PUBLIC_KEY = "publicKey";
+    public static final String KEY_ENCRYPTED_MESSAGE = "encryptedMessage";
+    public static final String KEY_ENCRYPTED_AES_KEY = "encryptedAESKey";
+    public static final String KEY_ENCRYPTED_AES_KEY_RECIPIENT = "encryptedAESKeyRecipient";
+    public static final String KEY_ENCRYPTED_AES_KEY_SENDER = "encryptedAESKeySender";
+
+    public static final String KEY_MESSAGE_TYPE = "messageType";
+    public static final String MESSAGE_TYPE_TEXT = "text";
+    public static final String MESSAGE_TYPE_IMAGE = "image";
 
 
 

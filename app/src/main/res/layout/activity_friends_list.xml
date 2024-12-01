@@ -6,35 +6,25 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
-<androidx.appcompat.widget.Toolbar
+    <androidx.appcompat.widget.Toolbar
         android:id="@+id/titleContainer"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
-            android:id="@+id/chatsTitle"
+            android:id="@+id/friendsListTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="@string/chats"
+            android:text="@string/friends_list"
             android:textColor="@color/black"
             android:textSize="20sp"
             android:textStyle="bold"/>
 
-        <ImageButton
-            android:id="@+id/addChatIcon"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginEnd="16dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/randomdescription"
-            android:src="@drawable/ic_add"/>
-
     </androidx.appcompat.widget.Toolbar>
 
     <LinearLayout
-        android:id="@+id/homeChats"
+        android:id="@+id/friendsList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginTop="52dp"
@@ -55,37 +45,21 @@
             android:visibility="gone"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
-    <TextView
-        android:id="@+id/instructionsHome"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/startingMessage"
-        android:textColor="@color/black"
-        app:layout_constraintBottom_toTopOf="@id/startMessaging"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed" />
+        <TextView
+            android:id="@+id/instructionsFriends"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="No friends yet :("
+            android:textColor="@color/black"
+            app:layout_constraintBottom_toTopOf="@id/startMessaging"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_chainStyle="packed"/>
 
-    <TextView
-        android:id="@+id/startMessaging"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:background="?attr/selectableItemBackground"
-        android:clickable="true"
-        android:focusable="true"
-        android:padding="8dp"
-        android:text="@string/start_messaging"
-        android:textColor="@color/primary_blue"
-        app:layout_constraintBottom_toTopOf="@id/bottomNavigationView"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/instructionsHome" />
+    </LinearLayout>
 
-</LinearLayout>
-
-<com.google.android.material.bottomnavigation.BottomNavigationView
+    <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavigationView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -95,4 +69,3 @@
         app:menu="@menu/bottom_nav_menu"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

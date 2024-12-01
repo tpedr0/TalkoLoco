@@ -37,6 +37,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 
+import javax.crypto.SecretKey;
+import com.example.talkoloco.utils.KeyManager;
+
 public class ChatActivity extends AppCompatActivity {
 
     private ActivityChatBinding binding;
@@ -45,7 +48,7 @@ public class ChatActivity extends AppCompatActivity {
     private List<ChatMessages> chatMessages;
     private ChatAdapter chatAdapter;
     private PreferenceManager preferenceManager;
-
+    private KeyManager keyManager;
     private FirebaseFirestore database;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
@@ -85,6 +88,11 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
+        keyManager = new KeyManager(getApplicationContext());
+        // Add this debug logging
+        String privateKey = preferenceManager.getString("PRIVATE_KEY");
+        Log.d(TAG, "Private key exists: " + (privateKey != null));
+        Log.d(TAG, "Receiver public key: " + (receiverUser != null ? receiverUser.getPublicKey() : "null"));
         loadReceiverDetails();
         setListeners();
         init();
@@ -113,7 +121,7 @@ public class ChatActivity extends AppCompatActivity {
                             init();
                             listenMessages();
                         } else {
-                            Log.e(TAG, "No user found with phone number: " + phoneNumber);
+                        Log.e(TAG, "No user found with phone number: " + phoneNumber);
                             Toast.makeText(ChatActivity.this,
                                     "Could not find user details. Please try logging in again.",
                                     Toast.LENGTH_LONG).show();
@@ -152,9 +160,9 @@ public class ChatActivity extends AppCompatActivity {
             chatMessages = new ArrayList<>();
 
             // Safely handle the receiver's profile picture
-            Bitmap receiverBitmap = null;
+            Bitmap receiverBitmap = ImageHandler.decodeImage(receiverUser.getProfilePictureUrl());
             if (receiverUser != null && receiverUser.profilePictureUrl != null && !receiverUser.profilePictureUrl.isEmpty()) {
-                receiverBitmap = getBitmapFromEncodedString(receiverUser.profilePictureUrl);
+                binding.profilePic.setImageBitmap(receiverBitmap);
             }
 
             chatAdapter = new ChatAdapter(
@@ -178,69 +186,52 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendMessages() {
         String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
-        Log.d("ChatDebug", "Current User ID from preferences: " + currentUserId);
-        Log.d("ChatDebug", "Receiver User ID: " + receiverUser.id);
+        String messageText = binding.messageInput.getText().toString().trim();
 
-        if (currentUserId == null || currentUserId.isEmpty()) {
-            Log.e("ChatDebug", "Current user ID is null or empty!");
-            // Try to get the current user ID from Firebase Auth
-            FirebaseFirestore.getInstance()
-                    .collection(Constants.KEY_COLLECTION_USERS)
-                    .whereEqualTo(Constants.KEY_USER_ID, preferenceManager.getString(Constants.KEY_USER_ID))
-                    .get()
-                    .addOnSuccessListener(querySnapshot -> {
-                        if (!querySnapshot.isEmpty()) {
-                            String userId = querySnapshot.getDocuments().get(0).getId();
-                            Log.d("ChatDebug", "Retrieved user ID from Firebase: " + userId);
-                            // Save it to preferences
-                            preferenceManager.putString(Constants.KEY_USER_ID, userId);
-                            // Try sending the message again now that we have the ID
-                            sendMessages();
-                        } else {
-                            Toast.makeText(ChatActivity.this,
-                                    "Could not find user details",
-                                    Toast.LENGTH_SHORT).show();
+        try {
+            // Generate a new AES key for this message
+            SecretKey aesKey = keyManager.generateAESKey();
+
+            // Encrypt the message with AES
+            String encryptedMessage = keyManager.encryptMessage(messageText, aesKey);
+
+            // Encrypt AES key for recipient
+            String recipientEncryptedKey = keyManager.encryptAESKey(aesKey, receiverUser.getPublicKey());
+
+            // Encrypt AES key for yourself (using your own public key)
+            String senderEncryptedKey = keyManager.encryptAESKey(aesKey, preferenceManager.getString(Constants.KEY_PUBLIC_KEY));
+
+            HashMap<String, Object> message = new HashMap<>();
+            message.put(Constants.KEY_SENDER_ID, currentUserId);
+            message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
+            message.put(Constants.KEY_ENCRYPTED_MESSAGE, encryptedMessage);
+            message.put(Constants.KEY_ENCRYPTED_AES_KEY_RECIPIENT, recipientEncryptedKey);
+            message.put(Constants.KEY_ENCRYPTED_AES_KEY_SENDER, senderEncryptedKey);
+            message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_TEXT);  // Add this line
+            message.put(Constants.KEY_TIMESTAMP, new Date());
+
+            database.collection(Constants.KEY_COLLECTION_CHAT)
+                    .add(message)
+                    .addOnSuccessListener(documentReference -> {
+                        Log.d(TAG, "Message sent successfully");
+                        binding.messageInput.setText(null);
+                        if (chatMessages != null && !chatMessages.isEmpty()) {
+                            binding.chatRecyclerView.smoothScrollToPosition(chatMessages.size() - 1);
                         }
                     })
                     .addOnFailureListener(e -> {
+                        Log.e(TAG, "Error sending message", e);
                         Toast.makeText(ChatActivity.this,
-                                "Error retrieving user details: " + e.getMessage(),
+                                "Error sending message: " + e.getMessage(),
                                 Toast.LENGTH_SHORT).show();
                     });
-            return;
-        }
 
-        if (binding.messageInput.getText().toString().trim().isEmpty()) {
+        } catch (Exception e) {
+            Log.e(TAG, "Error in encryption process", e);
             Toast.makeText(ChatActivity.this,
-                    "Message cannot be empty",
+                    "Error encrypting message: " + e.getMessage(),
                     Toast.LENGTH_SHORT).show();
-            return;
         }
-
-        HashMap<String, Object> message = new HashMap<>();
-        message.put(Constants.KEY_SENDER_ID, currentUserId);
-        message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
-        message.put(Constants.KEY_MESSAGE, binding.messageInput.getText().toString());
-        message.put(Constants.KEY_TIMESTAMP, new Date());
-
-        Log.d("ChatDebug", "Message object: " + message.toString());
-
-        database.collection(Constants.KEY_COLLECTION_CHAT)
-                .add(message)
-                .addOnSuccessListener(documentReference -> {
-                    Log.d("ChatDebug", "Message sent successfully");
-                    binding.messageInput.setText(null);
-                    // Optionally scroll to bottom of chat
-                    if (chatMessages != null && !chatMessages.isEmpty()) {
-                        binding.chatRecyclerView.smoothScrollToPosition(chatMessages.size() - 1);
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("ChatDebug", "Failed to send message", e);
-                    Toast.makeText(ChatActivity.this,
-                            "Error sending message: " + e.getMessage(),
-                            Toast.LENGTH_SHORT).show();
-                });
     }
 
     private void sendImage(){
@@ -274,26 +265,29 @@ public class ChatActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     });
             return;
-        } else {
-            try {
-                String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
-                if (ImageHandler.isImageSizeValid(encodedImage)) {
-                    HashMap<String, Object> message = new HashMap<>();
+        }
+        try {
+            String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
+            if (ImageHandler.isImageSizeValid(encodedImage)) {
+                HashMap<String, Object> message = new HashMap<>();
+                message.put(Constants.KEY_SENDER_ID, currentUserId);
+                message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
+                message.put(Constants.KEY_MESSAGE, encodedImage);  // Store encoded image directly
+                message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_IMAGE);  // Mark as image
+                message.put(Constants.KEY_TIMESTAMP, new Date());
 
-                    message.put(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID));
-                    message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
-
-                    message.put(Constants.KEY_MESSAGE, encodedImage);
-                    message.put(Constants.KEY_TIMESTAMP, new Date());
-
-                    database.collection(Constants.KEY_COLLECTION_CHAT).add(message);
-                } else {
-                    Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
-                }
-            } catch (Exception e) {
-                Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                database.collection(Constants.KEY_COLLECTION_CHAT).add(message)
+                        .addOnSuccessListener(documentReference -> {
+                            binding.messageInput.setText(null);
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(this, "Failed to send image", Toast.LENGTH_SHORT).show();
+                        });
+            } else {
+                Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
             }
-
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -317,32 +311,58 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
-        if (error != null) {
-            return;
-        }
+        if (error != null) return;
 
         if (value != null) {
             int count = chatMessages.size();
+            String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
+
             for (DocumentChange documentChange : value.getDocumentChanges()) {
                 if (documentChange.getType() == DocumentChange.Type.ADDED) {
                     ChatMessages chatMessage = new ChatMessages();
                     chatMessage.senderId = documentChange.getDocument().getString(Constants.KEY_SENDER_ID);
                     chatMessage.receiverID = documentChange.getDocument().getString(Constants.KEY_RECEIVER_ID);
-                    chatMessage.message = documentChange.getDocument().getString(Constants.KEY_MESSAGE);
+
+                    String messageType = documentChange.getDocument().getString(Constants.KEY_MESSAGE_TYPE);
+
+                    if (messageType != null && messageType.equals(Constants.MESSAGE_TYPE_IMAGE)) {
+                        // Handle image message - no encryption
+                        chatMessage.message = documentChange.getDocument().getString(Constants.KEY_MESSAGE);
+                    } else {
+                        // Handle text message - with encryption
+                        String encryptedMessage = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_MESSAGE);
+                        try {
+                            String encryptedAESKey;
+                            if (chatMessage.senderId.equals(currentUserId)) {
+                                // We're the sender, use sender's key
+                                Log.d(TAG, "Decrypting as sender");
+                                encryptedAESKey = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_AES_KEY_SENDER);
+                            } else {
+                                // We're the receiver, use recipient's key
+                                Log.d(TAG, "Decrypting as receiver");
+                                encryptedAESKey = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_AES_KEY_RECIPIENT);
+                            }
+
+                            SecretKey aesKey = keyManager.decryptAESKey(encryptedAESKey);
+                            chatMessage.message = keyManager.decryptMessage(encryptedMessage, aesKey);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error decrypting message", e);
+                            chatMessage.message = "[Error: Could not decrypt message]";
+                        }
+                    }
+
                     chatMessage.dateTime = getReadableDateTime(
                             documentChange.getDocument().getDate(Constants.KEY_TIMESTAMP));
                     chatMessage.dateObject = documentChange.getDocument().getDate(Constants.KEY_TIMESTAMP);
-
                     chatMessages.add(chatMessage);
                 }
             }
             Collections.sort(chatMessages, (obj1, obj2) -> obj1.dateObject.compareTo(obj2.dateObject));
-            if(count == 0){
+            if (count == 0) {
                 chatAdapter.notifyDataSetChanged();
-            }else{
-                chatAdapter.notifyItemRangeChanged(chatMessages.size(),chatMessages.size());
-
-                binding.chatRecyclerView.smoothScrollToPosition(chatMessages.size()-1);
+            } else {
+                chatAdapter.notifyItemRangeInserted(chatMessages.size(), chatMessages.size());
+                binding.chatRecyclerView.smoothScrollToPosition(chatMessages.size() - 1);
             }
             binding.chatRecyclerView.setVisibility(View.VISIBLE);
         }
@@ -372,6 +392,8 @@ public class ChatActivity extends AppCompatActivity {
         binding.sendMessage.setOnClickListener(v-> sendMessages());
 
         binding.attachments.setOnClickListener(v -> openImagePicker());
+
+        binding.profilePic.setOnClickListener(v -> viewProfile(receiverUser));
     }
 
     private void openImagePicker() {
@@ -383,5 +405,11 @@ public class ChatActivity extends AppCompatActivity {
     private String getReadableDateTime(Date date) {
         return new SimpleDateFormat("MMMM dd, yyyy - hh:mm a",
                 Locale.getDefault()).format(date);
+    }
+
+    private void viewProfile(User user){
+        Intent intent = new Intent(this, ViewProfileActivity.class);
+        intent.putExtra(Constants.KEY_USER,user);
+        startActivity(intent);
     }
 }

@@ -2,10 +2,12 @@ package com.example.talkoloco.controllers;
 
 import android.content.Context;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.PreferenceManager;
+import com.example.talkoloco.utils.KeyManager;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -16,7 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * the UserController class is a singleton controller that manages the user-related operations in the Firestore database.
+ * The UserController class is a singleton controller that manages the user-related operations in the Firestore database.
  */
 public class UserController {
     private final FirebaseFirestore db;
@@ -38,6 +40,7 @@ public class UserController {
      * saves the user data to the Firestore database.
      *
      * @param user              the user object to be saved
+     * @param context          the application context
      * @param onSuccessListener the listener for the successful save operation
      * @param onFailureListener the listener for the failed save operation
      */
@@ -53,7 +56,7 @@ public class UserController {
         if (plainPhoneNumber != null) {
             user.setPhoneNumber_hash(Hash.hashPhoneNumber(plainPhoneNumber));
 
-            // Save the plaintext phone number locally
+            // Save the plaintext phone number locally (for display purposes)
             PreferenceManager preferenceManager = new PreferenceManager(context);
             preferenceManager.putString(Constants.KEY_PHONE_NUMBER, plainPhoneNumber);
         }
@@ -61,7 +64,7 @@ public class UserController {
         // Prepare Firestore data
         Map<String, Object> userData = new HashMap<>();
         userData.put(Constants.KEY_USER_ID, user.getUserId());
-        userData.put(Constants.KEY_PHONE_NUMBER, user.getPhoneNumber_hash()); // Store the hash
+        userData.put(Constants.KEY_PHONE_NUMBER, user.getPhoneNumber_hash()); // Use hashed number
         userData.put(Constants.KEY_NAME, user.getName());
         userData.put(Constants.KEY_PROFILE_PICTURE, user.getProfilePictureUrl());
         userData.put(Constants.KEY_CREATED_AT, user.getCreatedAt());
@@ -71,30 +74,32 @@ public class UserController {
         db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(user.getUserId())
                 .set(userData, SetOptions.merge())
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "User saved successfully");
-                    onSuccessListener.onSuccess(aVoid);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error saving user", e);
-                    onFailureListener.onFailure(e);
-                });
+                .addOnSuccessListener(onSuccessListener)
+                .addOnFailureListener(onFailureListener);
     }
 
 
+
+
+    /**
+     * Gets the display phone number from local storage.
+     *
+     * @param context The application context
+     * @return The display phone number
+     */
     public String getDisplayPhoneNumber(Context context) {
         PreferenceManager preferenceManager = new PreferenceManager(context);
         return preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
     }
 
     /**
-     * updates the user's name and profile picture URL in the Firestore database.
+     * Updates the user's name and profile picture URL in the Firestore database.
      *
-     * @param userId                the ID of the user to be updated
-     * @param name                  the new name of the user
-     * @param profilePictureUrl     the new profile picture URL of the user
-     * @param onSuccessListener     the listener for the successful update operation
-     * @param onFailureListener     the listener for the failed update operation
+     * @param userId            the ID of the user to be updated
+     * @param name              the new name of the user
+     * @param profilePictureUrl the new profile picture URL of the user
+     * @param onSuccessListener the listener for the successful update operation
+     * @param onFailureListener the listener for the failed update operation
      */
     public void updateUserProfile(String userId, String name, String profilePictureUrl,
                                   OnSuccessListener<Void> onSuccessListener,
@@ -105,7 +110,7 @@ public class UserController {
         updates.put(Constants.KEY_NAME, name);
         updates.put(Constants.KEY_PROFILE_PICTURE, profilePictureUrl);
 
-        db.collection(Constants.KEY_COLLECTION_USERS)  // Use constant instead of USERS_COLLECTION
+        db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(userId)
                 .set(updates, SetOptions.merge())
                 .addOnSuccessListener(aVoid -> {
@@ -118,25 +123,37 @@ public class UserController {
                 });
     }
 
-    public void updatePhoneNumber(String userId, String phoneNumber,
-                                  OnSuccessListener<Void> onSuccessListener,
+    public void updatePhoneNumber(String userId, String phoneNumber, OnSuccessListener<Void> onSuccessListener,
                                   OnFailureListener onFailureListener) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put(Constants.KEY_PHONE_NUMBER, phoneNumber);
+        // Ensure userId is provided
+        if (userId == null || userId.isEmpty()) {
+            onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null or empty"));
+            return;
+        }
 
+        // Hash the phone number before saving
+        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
+
+        Map<String, Object> updates = new HashMap<>();
+        updates.put(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber);
+
+        // Update Firestore
         db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(userId)
                 .set(updates, SetOptions.merge())
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Phone number updated successfully");
-                    onSuccessListener.onSuccess(aVoid);
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "Error updating phone number", e);
-                    onFailureListener.onFailure(e);
-                });
+                .addOnSuccessListener(onSuccessListener)
+                .addOnFailureListener(onFailureListener);
     }
 
+
+    /**
+     * Updates specified fields for a user in the Firestore database.
+     *
+     * @param userId            the ID of the user to be updated
+     * @param updates           map of fields to update and their new values
+     * @param onSuccessListener the listener for the successful update operation
+     * @param onFailureListener the listener for the failed update operation
+     */
     public void updateFields(String userId, Map<String, Object> updates,
                              OnSuccessListener<Void> onSuccessListener,
                              OnFailureListener onFailureListener) {
@@ -160,6 +177,13 @@ public class UserController {
                 });
     }
 
+    /**
+     * Updates the last login timestamp for a user.
+     *
+     * @param userId            the ID of the user
+     * @param onSuccessListener the listener for the successful update operation
+     * @param onFailureListener the listener for the failed update operation
+     */
     public void updateLastLogin(String userId, OnSuccessListener<Void> onSuccessListener,
                                 OnFailureListener onFailureListener) {
         Map<String, Object> updates = new HashMap<>();
@@ -172,6 +196,13 @@ public class UserController {
                 .addOnFailureListener(onFailureListener);
     }
 
+    /**
+     * Retrieves a user by their ID from the Firestore database.
+     *
+     * @param userId            the ID of the user to retrieve
+     * @param onSuccessListener the listener for the successful retrieval operation
+     * @param onFailureListener the listener for the failed retrieval operation
+     */
     public void getUserById(String userId, OnSuccessListener<User> onSuccessListener,
                             OnFailureListener onFailureListener) {
         Log.d(TAG, "Fetching user with ID: " + userId);
@@ -196,11 +227,11 @@ public class UserController {
     }
 
     /**
-     * deletes the user data from the Firestore database.
+     * Deletes a user from the Firestore database.
      *
-     * @param userId               the ID of the user to be deleted
-     * @param onSuccessListener    the listener for the successful delete operation
-     * @param onFailureListener    the listener for the failed delete operation
+     * @param userId            the ID of the user to be deleted
+     * @param onSuccessListener the listener for the successful delete operation
+     * @param onFailureListener the listener for the failed delete operation
      */
     public void deleteUser(String userId, OnSuccessListener<Void> onSuccessListener,
                            OnFailureListener onFailureListener) {
@@ -220,11 +251,11 @@ public class UserController {
     }
 
     /**
-     * checks if a user with the given ID exists in the Firestore database.
+     * Checks if a user with the given ID exists in the Firestore database.
      *
-     * @param userId               the ID of the user to be checked
-     * @param onSuccessListener    the listener for the successful check operation
-     * @param onFailureListener    the listener for the failed check operation
+     * @param userId            the ID of the user to be checked
+     * @param onSuccessListener the listener for the successful check operation
+     * @param onFailureListener the listener for the failed check operation
      */
     public void checkIfUserExists(String userId, OnSuccessListener<Boolean> onSuccessListener,
                                   OnFailureListener onFailureListener) {
@@ -243,5 +274,75 @@ public class UserController {
                     onFailureListener.onFailure(e);
                 });
     }
+
+    /**
+     * Finds a user by their phone number in the Firestore database.
+     *
+     * @param phoneNumber       the phone number to search for
+     * @param onSuccessListener the listener for the successful retrieval
+     * @param onFailureListener the listener for the failed retrieval operation
+     */
+    public void getUserByPhoneNumber(String phoneNumber, OnSuccessListener<User> onSuccessListener,
+                                     OnFailureListener onFailureListener) {
+        Log.d(TAG, "Looking up user by phone number");
+
+        // Hash the phone number before querying
+        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    if (!querySnapshot.isEmpty()) {
+                        User user = querySnapshot.getDocuments().get(0).toObject(User.class);
+                        if (user != null) {
+                            // Set the user ID from the document ID
+                            user.setUserId(querySnapshot.getDocuments().get(0).getId());
+                            Log.d(TAG, "User found by phone number");
+                            onSuccessListener.onSuccess(user);
+                        } else {
+                            Log.d(TAG, "User document exists but couldn't be converted to User object");
+                            onFailureListener.onFailure(new Exception("User not found"));
+                        }
+                    } else {
+                        Log.d(TAG, "No user found with phone number: " + phoneNumber);
+                        onFailureListener.onFailure(new Exception("User not found"));
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e(TAG, "Error finding user by phone number", e);
+                    onFailureListener.onFailure(e);
+                });
+    }
+
+    public void doesPhoneNumberExist(String phoneNumber, OnSuccessListener<Boolean> onSuccess,
+                                     OnFailureListener onFailure) {
+        // Hash the phone number
+        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber)
+                .limit(1)
+                .get()
+                .addOnSuccessListener(querySnapshot -> onSuccess.onSuccess(!querySnapshot.isEmpty()))
+                .addOnFailureListener(onFailure);
+    }
+
+
+    public void createDummyUser(String phoneNumber, OnSuccessListener<Void> onSuccessListener,
+                                OnFailureListener onFailureListener) {
+        // Hash the phone number
+        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
+
+        Map<String, Object> dummyUser = new HashMap<>();
+        dummyUser.put("phoneNumber", hashedPhoneNumber);
+        dummyUser.put("name", "Dummy User");
+
+        db.collection("dummy_users")
+                .add(dummyUser)
+                .addOnSuccessListener(documentReference -> onSuccessListener.onSuccess(null))
+                .addOnFailureListener(onFailureListener);
+    }
+
 
 }
