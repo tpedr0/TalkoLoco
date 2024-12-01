@@ -747,4 +747,5 @@ public class SettingsActivity extends AppCompatActivity {
     private void showLogoutToast() {
         Toast.makeText(SettingsActivity.this, "Successfully logged out", Toast.LENGTH_SHORT).show();
     }
+
 }

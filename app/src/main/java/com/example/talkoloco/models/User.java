@@ -14,6 +14,7 @@ public class User implements Serializable {
     private String status;
     private String phoneNumber_display;
     private String phoneNumber_hash;
+    private String publicKey;
 
     public String image, email, token, id;
 
@@ -186,5 +187,22 @@ public class User implements Serializable {
         this.phoneNumber_hash = phoneNumber_hash;
     }
 
+    /**
+     * Returns the user's public key for message encryption.
+     *
+     * @return the public key of the user
+     */
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    /**
+     * Sets the user's public key.
+     *
+     * @param publicKey the public key for message encryption
+     */
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
 }
 

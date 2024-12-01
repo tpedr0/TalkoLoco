@@ -19,6 +19,7 @@ import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.databinding.ActivityProfileCreationBinding;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.utils.ImageHandler;
+import com.example.talkoloco.utils.KeyManager;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 
@@ -83,13 +84,18 @@ public class ProfileCreationActivity extends AppCompatActivity {
     private void onDoneClick() {
         String name = binding.nameInput.getText().toString().trim();
         String userId = authController.getCurrentUserId();
-        String phoneNumber = authController.getCurrentUser(); // Get phone from Auth
+        String phoneNumber = authController.getCurrentUser();
 
         if (userId != null && !name.isEmpty()) {
             User newUser = new User();
             newUser.setUserId(userId);
             newUser.setName(name);
-            newUser.setPhoneNumber(phoneNumber); // Set phone number
+            newUser.setPhoneNumber(phoneNumber);
+
+            // Generate encryption keys
+            KeyManager keyManager = new KeyManager(this);
+            String publicKey = keyManager.generateUserKeys();  // This will also save the private key
+            newUser.setPublicKey(publicKey);
 
             if (selectedImageUri != null) {
                 try {

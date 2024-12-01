@@ -11,8 +11,6 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.example.talkoloco.R;
 import com.example.talkoloco.controllers.AuthController;
-import com.example.talkoloco.controllers.KeyExchangeManager;
-import com.example.talkoloco.controllers.SignalEncryptionController;
 import com.example.talkoloco.controllers.UserController;
 import com.example.talkoloco.utils.Constants;
 import com.example.talkoloco.utils.PreferenceManager;
@@ -123,7 +121,7 @@ public class VerificationActivity extends AppCompatActivity {
         String savedUserId = preferenceManager.getString(Constants.KEY_USER_ID);
         Log.d(TAG, "Verified saved user ID from preferences: " + savedUserId);
 
-        // Check if we're updating an existing user's phone number
+        // check if we're updating an existing user's phone number
         if (isUpdating) {
             Intent resultIntent = new Intent();
             resultIntent.putExtra("phoneNumber", phoneNumber);
@@ -131,36 +129,42 @@ public class VerificationActivity extends AppCompatActivity {
             finish();
             return;
         }
-
-        // Initialize encryption keys for the new user
-        try {
-            SignalEncryptionController encryptionController = SignalEncryptionController.getInstance(this);
-            KeyExchangeManager keyExchangeManager = new KeyExchangeManager();
-
-            // Generate initial PreKeyBundle
-            PreKeyBundle initialBundle = encryptionController.generatePreKeyBundle();
-
-            // Store the initial bundle
-            keyExchangeManager.storePreKeyBundle(
-                    userId,
-                    initialBundle,
-                    aVoid -> {
-                        Log.d(TAG, "Initial encryption keys stored successfully");
-                        // Continue with user existence check
-                        proceedWithUserCheck(userId);
-                    },
-                    e -> {
-                        Log.e(TAG, "Failed to store initial encryption keys", e);
-                        // Continue anyway as this isn't critical for first-time setup
-                        proceedWithUserCheck(userId);
+        // check if user exists in Firestore
+        userController.checkIfUserExists(userId,
+                exists -> {
+                    if (exists) {
+                        // For existing users, save their data to preferences
+                        FirebaseFirestore.getInstance()
+                                .collection(Constants.KEY_COLLECTION_USERS)
+                                .document(userId)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    if (documentSnapshot.exists()) {
+                                        // Save the name if it exists
+                                        String name = documentSnapshot.getString(Constants.KEY_NAME);
+                                        if (name != null) {
+                                            preferenceManager.putString(Constants.KEY_NAME, name);
+                                        }
+                                    }
+                                    Log.d(TAG, "Navigating to Home with userId: " + userId);
+                                    navigateToHome();
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e(TAG, "Error fetching user data", e);
+                                    navigateToHome(); // Still proceed even if additional data fetch fails
+                                });
+                    } else {
+                        Log.d(TAG, "New user, navigating to Profile Creation with userId: " + userId);
+                        navigateToProfileCreation();
                     }
-            );
-        } catch (Exception e) {
-            Log.e(TAG, "Error initializing encryption", e);
-            // Continue with user check even if encryption setup fails
-            proceedWithUserCheck(userId);
-        }
+                },
+                e -> {
+                    Log.e(TAG, "Error checking user existence", e);
+                    Toast.makeText(this, "Error verifying user status", Toast.LENGTH_SHORT).show();
+                    onVerificationFailed();
+                });
     }
+
 
     private void proceedWithUserCheck(String userId) {
         // Check if user exists in Firestore
