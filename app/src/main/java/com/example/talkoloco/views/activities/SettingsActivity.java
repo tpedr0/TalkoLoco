@@ -6,6 +6,8 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
@@ -29,6 +31,7 @@ import com.example.talkoloco.databinding.ActivitySettingsBinding;
 import com.example.talkoloco.models.User;
 import com.example.talkoloco.models.UserStatus;
 import com.example.talkoloco.utils.Constants;
+import com.example.talkoloco.utils.Hash;
 import com.example.talkoloco.utils.ImageHandler;
 import com.example.talkoloco.utils.PreferenceManager;
 import com.example.talkoloco.utils.ThemeManager;
@@ -209,7 +212,7 @@ public class SettingsActivity extends AppCompatActivity {
         isNameEditing = false;
     }
 
-
+    // Adjusted code and reused some code from HomeActivity.java
     private void setupPhoneEditing() {
         // Disable editing for the phone number field initially
         binding.currentPhoneNumber.setEnabled(false);
@@ -232,6 +235,40 @@ public class SettingsActivity extends AppCompatActivity {
             }
         });
 
+        // Add text change listener for phone number formatting and validation
+        binding.currentPhoneNumber.addTextChangedListener(new TextWatcher() {
+            private boolean isFormatting;
+            private String lastFormatted = "";
+
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+            public void afterTextChanged(Editable s) {
+                if (isFormatting) return;
+                isFormatting = true;
+
+                // Format and validate phone number
+                String formattedNumber = formatAndValidatePhoneNumber(s.toString());
+                if (!formattedNumber.equals(lastFormatted)) {
+                    lastFormatted = formattedNumber;
+                    s.replace(0, s.length(), formattedNumber);
+                }
+
+                // Enable save button if the phone number is valid
+                boolean isValid = isPhoneNumberValid(formattedNumber);
+                if (!isValid && formattedNumber.length() > 3) {
+                    binding.currentPhoneNumber.setError("Enter a valid phone number");
+                } else {
+                    binding.currentPhoneNumber.setError(null);
+                }
+
+                isFormatting = false;
+            }
+        });
+
         // Save the phone number when the "Done" action is triggered
         binding.currentPhoneNumber.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
@@ -249,36 +286,88 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Formats and validates a phone number.
+     *
+     * @param input Raw phone number input from the user.
+     * @return Formatted phone number.
+     */
+    private String formatAndValidatePhoneNumber(String input) {
+        // Remove all non-digit characters
+        String digits = input.replaceAll("[^\\d]", "");
+
+        // Ensure we start with a country code
+        if (!digits.startsWith("1")) {
+            digits = "1" + digits;
+        }
+
+        // Limit to exactly 11 digits (including country code)
+        if (digits.length() > 11) {
+            digits = digits.substring(0, 11);
+        }
+
+        // Format the number
+        StringBuilder formatted = new StringBuilder("+1 ");
+        if (digits.length() > 1) {
+            String remaining = digits.substring(1); // Remove country code
+            if (remaining.length() > 0) {
+                formatted.append("(").append(remaining.substring(0, Math.min(3, remaining.length())));
+
+                if (remaining.length() > 3) {
+                    formatted.append(") ").append(remaining.substring(3, Math.min(6, remaining.length())));
+
+                    if (remaining.length() > 6) {
+                        formatted.append("-").append(remaining.substring(6, Math.min(10, remaining.length())));
+                    }
+                }
+            }
+        }
+        return formatted.toString();
+    }
+
+    /**
+     * Checks if the formatted phone number is valid.
+     *
+     * @param phoneNumber Formatted phone number.
+     * @return True if the phone number is valid, false otherwise.
+     */
+    private boolean isPhoneNumberValid(String phoneNumber) {
+        String digits = phoneNumber.replaceAll("[^\\d]", "");
+        return digits.length() == 11; // Ensure it's exactly 11 digits
+    }
+
+
 
     private void verifyAndSavePhoneNumber() {
         String newPhoneNumber = binding.currentPhoneNumber.getText().toString().trim();
 
-        // Skip verification if the new phone number matches the original number
-        if (newPhoneNumber.equals(originalPhoneNumber)) {
-            resetPhoneEditState();
+        if (!isPhoneNumberValid(newPhoneNumber)) {
+            Toast.makeText(this, "Please enter a valid phone number.", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Check if the number already exists
-        userController.doesPhoneNumberExist(newPhoneNumber, exists -> {
-            if (exists) {
-                Toast.makeText(this, "This phone number is already in use.", Toast.LENGTH_SHORT).show();
-                binding.currentPhoneNumber.setText(originalPhoneNumber);
-                resetPhoneEditState();
-            } else {
-                // Create a dummy user and swap the numbers
-                userController.createDummyUser(newPhoneNumber, aVoid -> {
-                    // After creating dummy user, update the current user's phone number
-                    updateUserPhoneNumber(newPhoneNumber);
-                }, e -> {
-                    Toast.makeText(this, "Failed to create dummy user.", Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Failed to create dummy user", e);
+        // Hash the phone number before checking existence
+        String hashedPhoneNumber = Hash.hashPhoneNumber(newPhoneNumber);
+
+        FirebaseFirestore.getInstance()
+                .collection("users") // Replace with your actual Firestore collection name
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber)
+                .get()
+                .addOnSuccessListener(querySnapshot -> {
+                    // Check if any documents are returned with the same hashed phone number
+                    if (!querySnapshot.isEmpty()) {
+                        Toast.makeText(this, "This phone number is already in use by another user.", Toast.LENGTH_SHORT).show();
+                        binding.currentPhoneNumber.setText(originalPhoneNumber);
+                        resetPhoneEditState();
+                    } else {
+                        // Proceed with updating the hashed phone number
+                        updateUserPhoneNumber(newPhoneNumber);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Error checking phone number existence.", Toast.LENGTH_SHORT).show();
+                    Log.e(TAG, "Error checking phone number existence", e);
                 });
-            }
-        }, e -> {
-            Toast.makeText(this, "Error checking phone number existence.", Toast.LENGTH_SHORT).show();
-            Log.e(TAG, "Error checking phone number existence", e);
-        });
     }
 
 
@@ -326,19 +415,24 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
+
+
     private void updateUserPhoneNumber(String newPhoneNumber) {
         String userId = authController.getCurrentUserId();
         if (userId != null && currentUser != null) {
+            // Hash the phone number before saving
+            String hashedPhoneNumber = Hash.hashPhoneNumber(newPhoneNumber);
+
             Map<String, Object> updates = new HashMap<>();
-            updates.put(Constants.KEY_PHONE_NUMBER, newPhoneNumber);
+            updates.put(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber);
 
             userController.updateFields(userId, updates,
                     aVoid -> {
                         Toast.makeText(this, "Phone number updated successfully", Toast.LENGTH_SHORT).show();
 
                         // Update the local user and original phone number
-                        currentUser.setPhoneNumber(newPhoneNumber);
-                        originalPhoneNumber = newPhoneNumber; // Sync immediately after successful update
+                        currentUser.setPhoneNumber(hashedPhoneNumber);
+                        originalPhoneNumber = hashedPhoneNumber; // Sync immediately after successful update
 
                         // Reset editing state
                         resetPhoneEditState();
@@ -351,6 +445,7 @@ public class SettingsActivity extends AppCompatActivity {
             );
         }
     }
+
 
 
 
@@ -388,8 +483,9 @@ public class SettingsActivity extends AppCompatActivity {
         hideKeyboard();
         isPhoneEditing = false;
     }
+
     private void updatePhoneNumber(String newPhoneNumber) {
-        String userId = authController.getCurrentUserId();
+        String userId = authController.getCurrentUserId(); // Retrieve userId from AuthController
         if (userId != null) {
             userController.updatePhoneNumber(userId, newPhoneNumber,
                     aVoid -> {
@@ -405,6 +501,7 @@ public class SettingsActivity extends AppCompatActivity {
             );
         }
     }
+
 
     private String formatPhoneNumber(String phoneNumber) {
         // Remove any non-digit characters
