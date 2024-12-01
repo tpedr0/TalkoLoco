@@ -264,6 +264,7 @@ public class HomeActivity extends AppCompatActivity implements UserListener {
                             User user = new User();
                             user.name = queryDocumentSnapshot.getString(Constants.KEY_NAME);
                             user.image = queryDocumentSnapshot.getString(Constants.KEY_IMAGE);
+                            user.profilePictureUrl = queryDocumentSnapshot.getString(Constants.KEY_IMAGE);
                             user.token = queryDocumentSnapshot.getString(Constants.KEY_FCM_TOKEN);
                             user.id = queryDocumentSnapshot.getId();
                             users.add(user);
