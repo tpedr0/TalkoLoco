@@ -121,7 +121,7 @@ public class ChatActivity extends AppCompatActivity {
                             init();
                             listenMessages();
                         } else {
-                            Log.e(TAG, "No user found with phone number: " + phoneNumber);
+                        Log.e(TAG, "No user found with phone number: " + phoneNumber);
                             Toast.makeText(ChatActivity.this,
                                     "Could not find user details. Please try logging in again.",
                                     Toast.LENGTH_LONG).show();
@@ -160,9 +160,9 @@ public class ChatActivity extends AppCompatActivity {
             chatMessages = new ArrayList<>();
 
             // Safely handle the receiver's profile picture
-            Bitmap receiverBitmap = null;
+            Bitmap receiverBitmap = ImageHandler.decodeImage(receiverUser.getProfilePictureUrl());
             if (receiverUser != null && receiverUser.profilePictureUrl != null && !receiverUser.profilePictureUrl.isEmpty()) {
-                receiverBitmap = getBitmapFromEncodedString(receiverUser.profilePictureUrl);
+                binding.profilePic.setImageBitmap(receiverBitmap);
             }
 
             chatAdapter = new ChatAdapter(
