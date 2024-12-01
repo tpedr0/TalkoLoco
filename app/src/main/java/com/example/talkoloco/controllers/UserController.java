@@ -53,11 +53,11 @@ public class UserController {
         // Initialize PreferenceManager
         PreferenceManager preferenceManager = new PreferenceManager(context);
 
-        // Generate encryption keys if they don't exist
-        KeyManager keyManager = new KeyManager(context);
+        // Get existing public key
         String publicKey = preferenceManager.getString(Constants.KEY_PUBLIC_KEY);
         if (publicKey == null) {
-            publicKey = keyManager.generateUserKeys();
+            onFailureListener.onFailure(new IllegalStateException("Public key not found"));
+            return;
         }
         user.setPublicKey(publicKey);
 

@@ -36,6 +36,10 @@ public class Constants {
     public static final String KEY_ENCRYPTED_AES_KEY_RECIPIENT = "encryptedAESKeyRecipient";
     public static final String KEY_ENCRYPTED_AES_KEY_SENDER = "encryptedAESKeySender";
 
+    public static final String KEY_MESSAGE_TYPE = "messageType";
+    public static final String MESSAGE_TYPE_TEXT = "text";
+    public static final String MESSAGE_TYPE_IMAGE = "image";
+
 
 
 

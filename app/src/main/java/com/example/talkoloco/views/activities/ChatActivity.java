@@ -207,6 +207,7 @@ public class ChatActivity extends AppCompatActivity {
             message.put(Constants.KEY_ENCRYPTED_MESSAGE, encryptedMessage);
             message.put(Constants.KEY_ENCRYPTED_AES_KEY_RECIPIENT, recipientEncryptedKey);
             message.put(Constants.KEY_ENCRYPTED_AES_KEY_SENDER, senderEncryptedKey);
+            message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_TEXT);  // Add this line
             message.put(Constants.KEY_TIMESTAMP, new Date());
 
             database.collection(Constants.KEY_COLLECTION_CHAT)
@@ -264,26 +265,29 @@ public class ChatActivity extends AppCompatActivity {
                                 Toast.LENGTH_SHORT).show();
                     });
             return;
-        } else {
-            try {
-                String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
-                if (ImageHandler.isImageSizeValid(encodedImage)) {
-                    HashMap<String, Object> message = new HashMap<>();
+        }
+        try {
+            String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
+            if (ImageHandler.isImageSizeValid(encodedImage)) {
+                HashMap<String, Object> message = new HashMap<>();
+                message.put(Constants.KEY_SENDER_ID, currentUserId);
+                message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
+                message.put(Constants.KEY_MESSAGE, encodedImage);  // Store encoded image directly
+                message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_IMAGE);  // Mark as image
+                message.put(Constants.KEY_TIMESTAMP, new Date());
 
-                    message.put(Constants.KEY_SENDER_ID, preferenceManager.getString(Constants.KEY_USER_ID));
-                    message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
-
-                    message.put(Constants.KEY_MESSAGE, encodedImage);
-                    message.put(Constants.KEY_TIMESTAMP, new Date());
-
-                    database.collection(Constants.KEY_COLLECTION_CHAT).add(message);
-                } else {
-                    Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
-                }
-            } catch (Exception e) {
-                Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
+                database.collection(Constants.KEY_COLLECTION_CHAT).add(message)
+                        .addOnSuccessListener(documentReference -> {
+                            binding.messageInput.setText(null);
+                        })
+                        .addOnFailureListener(e -> {
+                            Toast.makeText(this, "Failed to send image", Toast.LENGTH_SHORT).show();
+                        });
+            } else {
+                Toast.makeText(this, "Selected image is too large", Toast.LENGTH_SHORT).show();
             }
-
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to process image", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -307,9 +311,7 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
-        if (error != null) {
-            return;
-        }
+        if (error != null) return;
 
         if (value != null) {
             int count = chatMessages.size();
@@ -321,26 +323,32 @@ public class ChatActivity extends AppCompatActivity {
                     chatMessage.senderId = documentChange.getDocument().getString(Constants.KEY_SENDER_ID);
                     chatMessage.receiverID = documentChange.getDocument().getString(Constants.KEY_RECEIVER_ID);
 
-                    // Get encrypted message
-                    String encryptedMessage = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_MESSAGE);
+                    String messageType = documentChange.getDocument().getString(Constants.KEY_MESSAGE_TYPE);
 
-                    try {
-                        String encryptedAESKey;
-                        if (chatMessage.senderId.equals(currentUserId)) {
-                            // We're the sender - use sender's encrypted key
-                            encryptedAESKey = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_AES_KEY_SENDER);
-                        } else {
-                            // We're the receiver - use recipient's encrypted key
-                            encryptedAESKey = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_AES_KEY_RECIPIENT);
+                    if (messageType != null && messageType.equals(Constants.MESSAGE_TYPE_IMAGE)) {
+                        // Handle image message - no encryption
+                        chatMessage.message = documentChange.getDocument().getString(Constants.KEY_MESSAGE);
+                    } else {
+                        // Handle text message - with encryption
+                        String encryptedMessage = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_MESSAGE);
+                        try {
+                            String encryptedAESKey;
+                            if (chatMessage.senderId.equals(currentUserId)) {
+                                // We're the sender, use sender's key
+                                Log.d(TAG, "Decrypting as sender");
+                                encryptedAESKey = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_AES_KEY_SENDER);
+                            } else {
+                                // We're the receiver, use recipient's key
+                                Log.d(TAG, "Decrypting as receiver");
+                                encryptedAESKey = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_AES_KEY_RECIPIENT);
+                            }
+
+                            SecretKey aesKey = keyManager.decryptAESKey(encryptedAESKey);
+                            chatMessage.message = keyManager.decryptMessage(encryptedMessage, aesKey);
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error decrypting message", e);
+                            chatMessage.message = "[Error: Could not decrypt message]";
                         }
-
-                        // Decrypt using appropriate key
-                        SecretKey aesKey = keyManager.decryptAESKey(encryptedAESKey);
-                        chatMessage.message = keyManager.decryptMessage(encryptedMessage, aesKey);
-
-                    } catch (Exception e) {
-                        Log.e(TAG, "Error decrypting message", e);
-                        chatMessage.message = "[Error: Could not decrypt message]";
                     }
 
                     chatMessage.dateTime = getReadableDateTime(

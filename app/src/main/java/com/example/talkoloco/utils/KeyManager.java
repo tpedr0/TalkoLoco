@@ -45,26 +45,32 @@ public class KeyManager {
      */
     public String generateUserKeys() {
         try {
-            // Generate the key pair without using Android Keystore
+            Log.d(TAG, "Starting key generation process");
+            String existingPrivateKey = preferenceManager.getString("PRIVATE_KEY");
+            String existingPublicKey = preferenceManager.getString(Constants.KEY_PUBLIC_KEY);
+            Log.d(TAG, "Existing keys - Private: " + (existingPrivateKey != null) + ", Public: " + (existingPublicKey != null));
+
+            if (existingPrivateKey != null && existingPublicKey != null) {
+                Log.d(TAG, "Using existing keys");
+                return existingPublicKey;
+            }
+
+            Log.d(TAG, "Generating new RSA key pair");
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
             keyPairGenerator.initialize(RSA_KEY_SIZE);
             KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-            // Store private key encoded string in preferences
-            String privateKeyString = Base64.encodeToString(
-                    keyPair.getPrivate().getEncoded(),
-                    Base64.NO_WRAP
-            );
+            // Store the private key
+            byte[] privateKeyBytes = keyPair.getPrivate().getEncoded();
+            String privateKeyString = Base64.encodeToString(privateKeyBytes, Base64.NO_WRAP);
             preferenceManager.putString("PRIVATE_KEY", privateKeyString);
-            Log.d(TAG, "Private key saved: " + (privateKeyString != null));
+            Log.d(TAG, "Stored new private key, length: " + privateKeyString.length());
 
             // Get public key string
-            String publicKeyString = Base64.encodeToString(
-                    keyPair.getPublic().getEncoded(),
-                    Base64.NO_WRAP
-            );
+            byte[] publicKeyBytes = keyPair.getPublic().getEncoded();
+            String publicKeyString = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP);
             preferenceManager.putString(Constants.KEY_PUBLIC_KEY, publicKeyString);
-            Log.d(TAG, "Public key saved: " + (publicKeyString != null));
+            Log.d(TAG, "Generated new public key, length: " + publicKeyString.length());
 
             return publicKeyString;
         } catch (Exception e) {
@@ -165,23 +171,20 @@ public class KeyManager {
     /**
      * Encrypts the AES key using recipient's public key
      */
-
     public String encryptAESKey(SecretKey aesKey, String recipientPublicKeyString) {
         try {
-            // Convert base64 string back to PublicKey
-            byte[] publicKeyBytes = Base64.decode(recipientPublicKeyString, Base64.NO_WRAP);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-            PublicKey publicKey = keyFactory.generatePublic(keySpec);
+            Log.d(TAG, "Encrypting AES key with recipient's public key");
 
-            // Encrypt with RSA
+            // Decode public key
+            byte[] publicKeyBytes = Base64.decode(recipientPublicKeyString, Base64.NO_WRAP);
+            X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
+            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+            PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
+
+            // Encrypt
             Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-
-            // Only encrypt the AES key bytes
-            byte[] keyBytes = aesKey.getEncoded();
-            byte[] encryptedKey = cipher.doFinal(keyBytes);
-
+            byte[] encryptedKey = cipher.doFinal(aesKey.getEncoded());
             return Base64.encodeToString(encryptedKey, Base64.NO_WRAP);
         } catch (Exception e) {
             Log.e(TAG, "Error encrypting AES key", e);
@@ -191,22 +194,24 @@ public class KeyManager {
 
     public SecretKey decryptAESKey(String encryptedKeyString) {
         try {
+            Log.d(TAG, "Decrypting AES key");
+
+            // Get stored private key
             String privateKeyString = preferenceManager.getString("PRIVATE_KEY");
             if (privateKeyString == null) {
                 throw new RuntimeException("Private key not found");
             }
 
-            // Convert private key string back to PrivateKey
+            // Decode private key
             byte[] privateKeyBytes = Base64.decode(privateKeyString, Base64.NO_WRAP);
+            PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-            PrivateKey privateKey = keyFactory.generatePrivate(keySpec);
+            PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
 
-            // Decrypt with RSA
+            // Decrypt
             Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             byte[] decryptedKey = cipher.doFinal(Base64.decode(encryptedKeyString, Base64.NO_WRAP));
-
             return new SecretKeySpec(decryptedKey, "AES");
         } catch (Exception e) {
             Log.e(TAG, "Error decrypting AES key", e);
