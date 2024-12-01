@@ -10,6 +10,7 @@ import com.example.talkoloco.utils.PreferenceManager;
 import com.example.talkoloco.utils.KeyManager;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -315,16 +316,24 @@ public class UserController {
                 });
     }
 
-    public void doesPhoneNumberExist(String phoneNumber, OnSuccessListener<Boolean> onSuccess,
-                                     OnFailureListener onFailure) {
-        // Hash the phone number
-        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
-
-        db.collection(Constants.KEY_COLLECTION_USERS)
-                .whereEqualTo(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber)
-                .limit(1)
+    public void doesPhoneNumberExist(String phoneNumber, OnSuccessListener<Boolean> onSuccess, OnFailureListener onFailure) {
+        FirebaseFirestore.getInstance()
+                .collection(Constants.KEY_COLLECTION_USERS)
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber)
                 .get()
-                .addOnSuccessListener(querySnapshot -> onSuccess.onSuccess(!querySnapshot.isEmpty()))
+                .addOnSuccessListener(querySnapshot -> {
+                    boolean numberExists = false;
+
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
+                        // Check if the number belongs to another user
+                        if (!doc.getId().equals(AuthController.getInstance().getCurrentUserId())) {
+                            numberExists = true;
+                            break;
+                        }
+                    }
+
+                    onSuccess.onSuccess(numberExists);
+                })
                 .addOnFailureListener(onFailure);
     }
 
