@@ -61,6 +61,9 @@ public class SettingsActivity extends AppCompatActivity {
     private static final int VERIFY_PHONE_REQUEST = 100;
     private static final int DRAWABLE_RIGHT = 2;
     private ThemeManager themeManager;
+    private boolean isPhoneUpdated = false;
+    private boolean isNameUpdated = false;
+    private boolean isStatusUpdated = false;
 
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -246,23 +249,21 @@ public class SettingsActivity extends AppCompatActivity {
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {}
 
+            @Override
             public void afterTextChanged(Editable s) {
                 if (isFormatting) return;
                 isFormatting = true;
 
                 // Format and validate phone number
                 String formattedNumber = formatAndValidatePhoneNumber(s.toString());
-                if (!formattedNumber.equals(lastFormatted)) {
-                    lastFormatted = formattedNumber;
-                    s.replace(0, s.length(), formattedNumber);
-                }
+                s.replace(0, s.length(), formattedNumber);
 
-                // Enable save button if the phone number is valid
+                // Validate number length for error state
                 boolean isValid = isPhoneNumberValid(formattedNumber);
                 if (!isValid && formattedNumber.length() > 3) {
                     binding.currentPhoneNumber.setError("Enter a valid phone number");
                 } else {
-                    binding.currentPhoneNumber.setError(null);
+                    binding.currentPhoneNumber.setError(null); // Clear error state
                 }
 
                 isFormatting = false;
@@ -301,12 +302,7 @@ public class SettingsActivity extends AppCompatActivity {
             digits = "1" + digits;
         }
 
-        // Limit to exactly 11 digits (including country code)
-        if (digits.length() > 11) {
-            digits = digits.substring(0, 11);
-        }
-
-        // Format the number
+        // Format the number step by step to handle incomplete inputs
         StringBuilder formatted = new StringBuilder("+1 ");
         if (digits.length() > 1) {
             String remaining = digits.substring(1); // Remove country code
@@ -325,6 +321,7 @@ public class SettingsActivity extends AppCompatActivity {
         return formatted.toString();
     }
 
+
     /**
      * Checks if the formatted phone number is valid.
      *
@@ -341,33 +338,62 @@ public class SettingsActivity extends AppCompatActivity {
     private void verifyAndSavePhoneNumber() {
         String newPhoneNumber = binding.currentPhoneNumber.getText().toString().trim();
 
+        // Check if the phone number is invalid
         if (!isPhoneNumberValid(newPhoneNumber)) {
             Toast.makeText(this, "Please enter a valid phone number.", Toast.LENGTH_SHORT).show();
+            binding.currentPhoneNumber.setText(originalPhoneNumber);
             return;
         }
 
-        // Hash the phone number before checking existence
-        String hashedPhoneNumber = Hash.hashPhoneNumber(newPhoneNumber);
-
-        FirebaseFirestore.getInstance()
-                .collection("users") // Replace with your actual Firestore collection name
-                .whereEqualTo(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    // Check if any documents are returned with the same hashed phone number
-                    if (!querySnapshot.isEmpty()) {
-                        Toast.makeText(this, "This phone number is already in use by another user.", Toast.LENGTH_SHORT).show();
-                        binding.currentPhoneNumber.setText(originalPhoneNumber);
-                        resetPhoneEditState();
-                    } else {
-                        // Proceed with updating the hashed phone number
-                        updateUserPhoneNumber(newPhoneNumber);
-                    }
+        // Show a confirmation dialog before proceeding
+        new AlertDialog.Builder(this)
+                .setTitle("Update Phone Number")
+                .setMessage("Are you sure you want to update your phone number?")
+                .setPositiveButton("YES", (dialog1, which) -> {
+                    // Proceed to check for duplicates and update
+                    checkAndSavePhoneNumber(newPhoneNumber);
                 })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Error checking phone number existence.", Toast.LENGTH_SHORT).show();
-                    Log.e(TAG, "Error checking phone number existence", e);
-                });
+                .setNegativeButton("CANCEL", (dialog1, which) -> {
+                    // Revert to the original phone number if canceled
+                    binding.currentPhoneNumber.setText(originalPhoneNumber);
+                    resetPhoneEditState();
+                })
+                .create()
+                .show();
+
+        // Check in Firebase for duplicates
+        userController.doesPhoneNumberExist(newPhoneNumber, exists -> {
+            if (exists) {
+                Toast.makeText(this, "This phone number is already in use.", Toast.LENGTH_SHORT).show();
+                binding.currentPhoneNumber.setText(originalPhoneNumber);
+                resetPhoneEditState();
+            } else {
+                // If the number is valid and not in use, update it
+                updateUserPhoneNumber(newPhoneNumber);
+            }
+        }, e -> {
+            Toast.makeText(this, "Error checking phone number existence.", Toast.LENGTH_SHORT).show();
+            binding.currentPhoneNumber.setText(originalPhoneNumber);
+            resetPhoneEditState();
+        });
+    }
+
+    private void checkAndSavePhoneNumber(String newPhoneNumber) {
+        // Check in Firebase for duplicates
+        userController.doesPhoneNumberExist(newPhoneNumber, exists -> {
+            if (exists) {
+                Toast.makeText(this, "This phone number is already in use.", Toast.LENGTH_SHORT).show();
+                binding.currentPhoneNumber.setText(originalPhoneNumber);
+                resetPhoneEditState();
+            } else {
+                // If the number is valid and not in use, update it
+                updateUserPhoneNumber(newPhoneNumber);
+            }
+        }, e -> {
+            Toast.makeText(this, "Error checking phone number existence.", Toast.LENGTH_SHORT).show();
+            binding.currentPhoneNumber.setText(originalPhoneNumber);
+            resetPhoneEditState();
+        });
     }
 
 
@@ -415,39 +441,36 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
-
-
     private void updateUserPhoneNumber(String newPhoneNumber) {
         String userId = authController.getCurrentUserId();
         if (userId != null && currentUser != null) {
-            // Hash the phone number before saving
-            String hashedPhoneNumber = Hash.hashPhoneNumber(newPhoneNumber);
-
             Map<String, Object> updates = new HashMap<>();
-            updates.put(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber);
+            updates.put(Constants.KEY_PHONE_NUMBER, Hash.hashPhoneNumber(newPhoneNumber));
 
             userController.updateFields(userId, updates,
                     aVoid -> {
-                        Toast.makeText(this, "Phone number updated successfully", Toast.LENGTH_SHORT).show();
+                        isPhoneUpdated = true;
+                        // Update local storage
+                        PreferenceManager preferenceManager = new PreferenceManager(this);
+                        preferenceManager.putString(Constants.KEY_PHONE_NUMBER, newPhoneNumber);
 
-                        // Update the local user and original phone number
-                        currentUser.setPhoneNumber(hashedPhoneNumber);
-                        originalPhoneNumber = hashedPhoneNumber; // Sync immediately after successful update
+                        // Update UI and current user
+                        currentUser.setPhoneNumber(newPhoneNumber);
+                        binding.currentPhoneNumber.setText(newPhoneNumber);
+                        originalPhoneNumber = newPhoneNumber; // Sync original phone number
 
-                        // Reset editing state
-                        resetPhoneEditState();
+                        if (!isPhoneEditing) {
+                            isPhoneUpdated = false;
+                        } resetPhoneEditState();
                     },
                     e -> {
                         Toast.makeText(this, "Failed to update phone number", Toast.LENGTH_SHORT).show();
-                        binding.currentPhoneNumber.setText(originalPhoneNumber);
+                        binding.currentPhoneNumber.setText(originalPhoneNumber); // Revert to old number
                         Log.e(TAG, "Failed to update phone number", e);
                     }
             );
         }
     }
-
-
-
 
 
 
@@ -484,23 +507,23 @@ public class SettingsActivity extends AppCompatActivity {
         isPhoneEditing = false;
     }
 
-    private void updatePhoneNumber(String newPhoneNumber) {
-        String userId = authController.getCurrentUserId(); // Retrieve userId from AuthController
-        if (userId != null) {
-            userController.updatePhoneNumber(userId, newPhoneNumber,
-                    aVoid -> {
-                        Toast.makeText(this, "Phone number updated successfully", Toast.LENGTH_SHORT).show();
-                        currentUser.setPhoneNumber(newPhoneNumber);
-                        binding.currentPhoneNumber.setText(newPhoneNumber);
-                    },
-                    e -> {
-                        Toast.makeText(this, "Failed to update phone number", Toast.LENGTH_SHORT).show();
-                        binding.currentPhoneNumber.setText(originalPhoneNumber);
-                        Log.e(TAG, "Failed to update phone number", e);
-                    }
-            );
-        }
-    }
+//    private void updatePhoneNumber(String newPhoneNumber) {
+//        String userId = authController.getCurrentUserId(); // Retrieve userId from AuthController
+//        if (userId != null) {
+//            userController.updatePhoneNumber(userId, newPhoneNumber,
+//                    aVoid -> {
+//                        Toast.makeText(this, "Phone number updated successfully", Toast.LENGTH_SHORT).show();
+//                        currentUser.setPhoneNumber(newPhoneNumber);
+//                        binding.currentPhoneNumber.setText(newPhoneNumber);
+//                    },
+//                    e -> {
+//                        Toast.makeText(this, "Failed to update phone number", Toast.LENGTH_SHORT).show();
+//                        binding.currentPhoneNumber.setText(originalPhoneNumber);
+//                        Log.e(TAG, "Failed to update phone number", e);
+//                    }
+//            );
+//        }
+//    }
 
 
     private String formatPhoneNumber(String phoneNumber) {
@@ -697,11 +720,17 @@ public class SettingsActivity extends AppCompatActivity {
             userController.getUserById(userId,
                     user -> {
                         if (user != null) {
+                            currentUser = user; // Update local user object
                             updateUI(user);
-                            // Get locally stored display number
-                            String displayNumber = userController.getDisplayPhoneNumber(this);
-                            binding.currentPhoneNumber.setText(displayNumber != null ?
-                                    displayNumber : "No phone number available");
+
+                            // Fetch and prioritize locally stored phone number
+                            PreferenceManager preferenceManager = new PreferenceManager(this);
+                            String displayNumber = preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
+                            if (displayNumber != null) {
+                                binding.currentPhoneNumber.setText(displayNumber); // Use locally stored number
+                            } else {
+                                binding.currentPhoneNumber.setText(user.getPhoneNumber() != null ? user.getPhoneNumber() : "No phone number available");
+                            }
                         }
                         binding.profileIcon.setAlpha(1.0f);
                     },
@@ -711,17 +740,6 @@ public class SettingsActivity extends AppCompatActivity {
                         binding.profileIcon.setAlpha(1.0f);
                     }
             );
-        }
-
-        // Retrieve phone number from SharedPreferences
-        PreferenceManager preferenceManager = new PreferenceManager(this);
-        String displayPhoneNumber = preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
-
-        // Update the phone number field in the UI
-        if (displayPhoneNumber != null) {
-            binding.currentPhoneNumber.setText(displayPhoneNumber);
-        } else {
-            binding.currentPhoneNumber.setText("No phone number available");
         }
     }
 

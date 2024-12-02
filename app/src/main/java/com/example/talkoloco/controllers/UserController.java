@@ -70,12 +70,24 @@ public class UserController {
         userData.put(Constants.KEY_CREATED_AT, user.getCreatedAt());
         userData.put(Constants.KEY_LAST_LOGIN, user.getLastLoginAt());
 
+        // Add the public key to the user data
+        userData.put(Constants.KEY_PUBLIC_KEY, user.getPublicKey());
+
+        // Add debug logging
+        Log.d("UserController", "Saving user data with public key: " + user.getPublicKey());
+
         // Save to Firestore
         db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(user.getUserId())
                 .set(userData, SetOptions.merge())
-                .addOnSuccessListener(onSuccessListener)
-                .addOnFailureListener(onFailureListener);
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("UserController", "User data saved successfully");
+                    onSuccessListener.onSuccess(aVoid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("UserController", "Error saving user data", e);
+                    onFailureListener.onFailure(e);
+                });
     }
 
 
