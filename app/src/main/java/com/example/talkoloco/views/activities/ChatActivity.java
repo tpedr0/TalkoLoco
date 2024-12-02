@@ -69,7 +69,15 @@ public class ChatActivity extends AppCompatActivity {
         binding = ActivityChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Initialize the PreferenceManager first
         preferenceManager = new PreferenceManager(getApplicationContext());
+
+        // Initialize KeyManager right after PreferenceManager
+        keyManager = new KeyManager(getApplicationContext());
+
+        // Initialize database
+        database = FirebaseFirestore.getInstance();
+
 
         // Debug log to check if user ID exists in preferences
         String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
@@ -153,7 +161,21 @@ public class ChatActivity extends AppCompatActivity {
 
     private void init() {
         try {
-            preferenceManager = new PreferenceManager(getApplicationContext());
+            // Ensure keyManager is initialized
+            if (keyManager == null) {
+                keyManager = new KeyManager(getApplicationContext());
+            }
+
+            // Validate encryption keys
+            String privateKey = preferenceManager.getString("PRIVATE_KEY");
+            String publicKey = preferenceManager.getString(Constants.KEY_PUBLIC_KEY);
+
+            if (privateKey == null || publicKey == null) {
+                // Generate new keys if missing
+                publicKey = keyManager.generateUserKeys();
+                Log.d(TAG, "Generated new encryption keys");
+            }
+
             chatMessages = new ArrayList<>();
 
             // Safely handle the receiver's profile picture
@@ -164,7 +186,7 @@ public class ChatActivity extends AppCompatActivity {
 
             chatAdapter = new ChatAdapter(
                     chatMessages,
-                    receiverBitmap,  // This can now be null
+                    receiverBitmap,
                     preferenceManager.getString(Constants.KEY_USER_ID)
             );
 
@@ -174,16 +196,50 @@ public class ChatActivity extends AppCompatActivity {
                 throw new IllegalStateException("Binding or RecyclerView is null");
             }
 
-            database = FirebaseFirestore.getInstance();
         } catch (Exception e) {
+            Log.e(TAG, "Error initializing chat: " + e.getMessage(), e);
             Toast.makeText(this, "Error initializing chat: " + e.getMessage(), Toast.LENGTH_LONG).show();
-            finish(); // Safely close the activity
+            finish();
         }
     }
+    private boolean validateEncryptionSetup() {
+        if (keyManager == null) {
+            Log.e(TAG, "KeyManager is null");
+            return false;
+        }
+
+        String privateKey = preferenceManager.getString("PRIVATE_KEY");
+        String publicKey = preferenceManager.getString(Constants.KEY_PUBLIC_KEY);
+
+        if (privateKey == null || publicKey == null) {
+            Log.e(TAG, "Missing encryption keys");
+            return false;
+        }
+
+        if (receiverUser == null || receiverUser.getPublicKey() == null) {
+            Log.e(TAG, "Missing receiver's public key");
+            return false;
+        }
+
+        return true;
+    }
+
+
 
     private void sendMessages() {
+        if (!validateEncryptionSetup()) {
+            Toast.makeText(this, "Cannot send message: Encryption not properly initialized",
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
         String messageText = binding.messageInput.getText().toString().trim();
+
+        if (messageText.trim().isEmpty()) {
+            Toast.makeText(this, "Cannot send empty message", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         try {
             // Generate a new AES key for this message
@@ -196,7 +252,8 @@ public class ChatActivity extends AppCompatActivity {
             String recipientEncryptedKey = keyManager.encryptAESKey(aesKey, receiverUser.getPublicKey());
 
             // Encrypt AES key for yourself (using your own public key)
-            String senderEncryptedKey = keyManager.encryptAESKey(aesKey, preferenceManager.getString(Constants.KEY_PUBLIC_KEY));
+            String senderEncryptedKey = keyManager.encryptAESKey(aesKey,
+                    preferenceManager.getString(Constants.KEY_PUBLIC_KEY));
 
             HashMap<String, Object> message = new HashMap<>();
             message.put(Constants.KEY_SENDER_ID, currentUserId);
@@ -204,7 +261,7 @@ public class ChatActivity extends AppCompatActivity {
             message.put(Constants.KEY_ENCRYPTED_MESSAGE, encryptedMessage);
             message.put(Constants.KEY_ENCRYPTED_AES_KEY_RECIPIENT, recipientEncryptedKey);
             message.put(Constants.KEY_ENCRYPTED_AES_KEY_SENDER, senderEncryptedKey);
-            message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_TEXT);  // Add this line
+            message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_TEXT);
             message.put(Constants.KEY_TIMESTAMP, new Date());
 
             database.collection(Constants.KEY_COLLECTION_CHAT)
