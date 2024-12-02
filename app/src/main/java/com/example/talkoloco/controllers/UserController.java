@@ -10,7 +10,6 @@ import com.example.talkoloco.utils.PreferenceManager;
 import com.example.talkoloco.utils.KeyManager;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 
@@ -71,12 +70,24 @@ public class UserController {
         userData.put(Constants.KEY_CREATED_AT, user.getCreatedAt());
         userData.put(Constants.KEY_LAST_LOGIN, user.getLastLoginAt());
 
+        // Add the public key to the user data
+        userData.put(Constants.KEY_PUBLIC_KEY, user.getPublicKey());
+
+        // Add debug logging
+        Log.d("UserController", "Saving user data with public key: " + user.getPublicKey());
+
         // Save to Firestore
         db.collection(Constants.KEY_COLLECTION_USERS)
                 .document(user.getUserId())
                 .set(userData, SetOptions.merge())
-                .addOnSuccessListener(onSuccessListener)
-                .addOnFailureListener(onFailureListener);
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("UserController", "User data saved successfully");
+                    onSuccessListener.onSuccess(aVoid);
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("UserController", "Error saving user data", e);
+                    onFailureListener.onFailure(e);
+                });
     }
 
 
@@ -316,24 +327,16 @@ public class UserController {
                 });
     }
 
-    public void doesPhoneNumberExist(String phoneNumber, OnSuccessListener<Boolean> onSuccess, OnFailureListener onFailure) {
-        FirebaseFirestore.getInstance()
-                .collection(Constants.KEY_COLLECTION_USERS)
-                .whereEqualTo(Constants.KEY_PHONE_NUMBER, phoneNumber)
+    public void doesPhoneNumberExist(String phoneNumber, OnSuccessListener<Boolean> onSuccess,
+                                     OnFailureListener onFailure) {
+        // Hash the phone number
+        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
+
+        db.collection(Constants.KEY_COLLECTION_USERS)
+                .whereEqualTo(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber)
+                .limit(1)
                 .get()
-                .addOnSuccessListener(querySnapshot -> {
-                    boolean numberExists = false;
-
-                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-                        // Check if the number belongs to another user
-                        if (!doc.getId().equals(AuthController.getInstance().getCurrentUserId())) {
-                            numberExists = true;
-                            break;
-                        }
-                    }
-
-                    onSuccess.onSuccess(numberExists);
-                })
+                .addOnSuccessListener(querySnapshot -> onSuccess.onSuccess(!querySnapshot.isEmpty()))
                 .addOnFailureListener(onFailure);
     }
 

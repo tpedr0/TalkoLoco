@@ -95,6 +95,7 @@ public class ProfileCreationActivity extends AppCompatActivity {
             // Generate encryption keys
             KeyManager keyManager = new KeyManager(this);
             String publicKey = keyManager.generateUserKeys();  // This will also save the private key
+            Log.d("KeyDebug", "Generated public key: " + publicKey);
             newUser.setPublicKey(publicKey);
 
             if (selectedImageUri != null) {

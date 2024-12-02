@@ -88,11 +88,8 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
 
-        keyManager = new KeyManager(getApplicationContext());
-        // Add this debug logging
-        String privateKey = preferenceManager.getString("PRIVATE_KEY");
-        Log.d(TAG, "Private key exists: " + (privateKey != null));
-        Log.d(TAG, "Receiver public key: " + (receiverUser != null ? receiverUser.getPublicKey() : "null"));
+        Log.d(TAG, "Received user: " + receiverUser.name + ", ID: " + receiverUser.id);
+
         loadReceiverDetails();
         setListeners();
         init();
@@ -121,7 +118,7 @@ public class ChatActivity extends AppCompatActivity {
                             init();
                             listenMessages();
                         } else {
-                        Log.e(TAG, "No user found with phone number: " + phoneNumber);
+                            Log.e(TAG, "No user found with phone number: " + phoneNumber);
                             Toast.makeText(ChatActivity.this,
                                     "Could not find user details. Please try logging in again.",
                                     Toast.LENGTH_LONG).show();
