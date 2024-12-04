@@ -41,7 +41,9 @@ public class ChatMessages {
         return dateTime != null ? dateTime : "";
     }
 
-    public Date getDateObject() {
+   /* public Date getDateObject() {
         return dateObject != null ? dateObject : new Date();
     }
+
+    */
 }

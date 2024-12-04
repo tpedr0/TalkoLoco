@@ -21,6 +21,11 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.signal.libsignal.protocol.state.PreKeyBundle;
 
+/**
+ * Activity handling phone number verification process using Firebase Authentication.
+ * This activity manages the verification code input, verification process, and subsequent
+ * user flow based on whether the user is new or existing.
+ */
 public class VerificationActivity extends AppCompatActivity {
     private EditText codeInput;
     private TextView instructionsText;
@@ -34,16 +39,24 @@ public class VerificationActivity extends AppCompatActivity {
     private long lastResendTime = 0;
     private static final int RESEND_COOLDOWN_SECONDS = 30;
 
+    /**
+     * Initializes the activity, sets up the UI components, and retrieves necessary data
+     * from the intent that started this activity.
+     *
+     * @param savedInstanceState If the activity is being re-initialized after being shut down,
+     *                          this contains the most recently saved state
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_verification);
 
+        // Initialize controllers and preference manager
         authController = AuthController.getInstance();
         userController = UserController.getInstance();
         preferenceManager = new PreferenceManager(getApplicationContext());
 
-        // Get verification ID and phone number from intent
+        // Retrieve verification data from intent
         verificationId = getIntent().getStringExtra("verificationId");
         phoneNumber = getIntent().getStringExtra("phoneNumber");
         isUpdating = getIntent().getBooleanExtra("isUpdating", false);
@@ -53,12 +66,17 @@ public class VerificationActivity extends AppCompatActivity {
         setupInstructions();
     }
 
+    /**
+     * Initializes and sets up all UI components including the code input field,
+     * back button, instructions text, and resend button with their respective click listeners.
+     */
     private void initializeViews() {
         codeInput = findViewById(R.id.codeInput);
         TextView backButton = findViewById(R.id.backButton);
         instructionsText = findViewById(R.id.instructionsText);
         TextView resendButton = findViewById(R.id.resendButton);
 
+        // Set click listeners for navigation and resend functionality
         backButton.setOnClickListener(v -> {
             setResult(RESULT_CANCELED);
             finish();
@@ -66,11 +84,18 @@ public class VerificationActivity extends AppCompatActivity {
         resendButton.setOnClickListener(v -> onResendClick());
     }
 
+    /**
+     * Sets up the verification instructions text by formatting it with the user's phone number.
+     */
     private void setupInstructions() {
         String instructions = getString(R.string.verify_instructions, phoneNumber);
         instructionsText.setText(instructions);
     }
 
+    /**
+     * Configures the verification code input field with automatic verification
+     * trigger when the correct number of digits is entered.
+     */
     private void setupCodeInput() {
         codeInput.requestFocus();
         codeInput.addTextChangedListener(new TextWatcher() {
@@ -89,6 +114,12 @@ public class VerificationActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Attempts to verify the entered verification code with Firebase Authentication.
+     * On success, proceeds with user existence check and appropriate navigation.
+     *
+     * @param code The 6-digit verification code entered by the user
+     */
     private void verifyCode(String code) {
         Log.d(TAG, "Attempting to verify code");
 
@@ -104,6 +135,12 @@ public class VerificationActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Checks if the user exists in the database and handles the appropriate flow:
+     * - For existing users: Loads user data and navigates to home
+     * - For new users: Navigates to profile creation
+     * - For phone number updates: Returns to previous screen with updated number
+     */
     private void checkUserExistsAndProceed() {
         String userId = authController.getCurrentUserId();
         if (userId == null) {
@@ -117,11 +154,11 @@ public class VerificationActivity extends AppCompatActivity {
         preferenceManager.putString(Constants.KEY_USER_ID, userId);
         preferenceManager.putString(Constants.KEY_PHONE_NUMBER, phoneNumber);
 
-        // Verify the save worked
+        // Verify data was saved correctly
         String savedUserId = preferenceManager.getString(Constants.KEY_USER_ID);
         Log.d(TAG, "Verified saved user ID from preferences: " + savedUserId);
 
-        // check if we're updating an existing user's phone number
+        // Handle phone number update scenario
         if (isUpdating) {
             Intent resultIntent = new Intent();
             resultIntent.putExtra("phoneNumber", phoneNumber);
@@ -129,7 +166,7 @@ public class VerificationActivity extends AppCompatActivity {
             finish();
             return;
         }
-        // check if user exists in Firestore
+        // Check user existence and proceed accordingly
         userController.checkIfUserExists(userId,
                 exists -> {
                     if (exists) {
@@ -165,44 +202,10 @@ public class VerificationActivity extends AppCompatActivity {
                 });
     }
 
-
-    private void proceedWithUserCheck(String userId) {
-        // Check if user exists in Firestore
-        userController.checkIfUserExists(userId,
-                exists -> {
-                    if (exists) {
-                        // For existing users, save their data to preferences
-                        FirebaseFirestore.getInstance()
-                                .collection(Constants.KEY_COLLECTION_USERS)
-                                .document(userId)
-                                .get()
-                                .addOnSuccessListener(documentSnapshot -> {
-                                    if (documentSnapshot.exists()) {
-                                        // Save the name if it exists
-                                        String name = documentSnapshot.getString(Constants.KEY_NAME);
-                                        if (name != null) {
-                                            preferenceManager.putString(Constants.KEY_NAME, name);
-                                        }
-                                    }
-                                    Log.d(TAG, "Navigating to Home with userId: " + userId);
-                                    navigateToHome();
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e(TAG, "Error fetching user data", e);
-                                    navigateToHome(); // Still proceed even if additional data fetch fails
-                                });
-                    } else {
-                        Log.d(TAG, "New user, navigating to Profile Creation with userId: " + userId);
-                        navigateToProfileCreation();
-                    }
-                },
-                e -> {
-                    Log.e(TAG, "Error checking user existence", e);
-                    Toast.makeText(this, "Error verifying user status", Toast.LENGTH_SHORT).show();
-                    onVerificationFailed();
-                });
-    }
-
+    /**
+     * Navigates to the HomeActivity, clearing the activity stack to prevent
+     * returning to the verification flow.
+     */
     private void navigateToHome() {
         Intent intent = new Intent(this, HomeActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -210,6 +213,10 @@ public class VerificationActivity extends AppCompatActivity {
         finish();
     }
 
+    /**
+     * Navigates to the ProfileCreationActivity for new users, clearing the activity
+     * stack to prevent returning to the verification flow.
+     */
     private void navigateToProfileCreation() {
         Intent intent = new Intent(this, ProfileCreationActivity.class);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
@@ -217,20 +224,25 @@ public class VerificationActivity extends AppCompatActivity {
         finish();
     }
 
-
-
+    /**
+     * Handles verification failure by showing an error message and resetting the input field.
+     */
     private void onVerificationFailed() {
         Toast.makeText(this, "Invalid code. Please try again.", Toast.LENGTH_SHORT).show();
         codeInput.setText("");
     }
 
+    /**
+     * Handles the resend verification code request, implementing a cooldown period
+     * to prevent abuse. Shows appropriate feedback to the user about the resend status.
+     */
     private void onResendClick() {
         if (phoneNumber == null) {
             Toast.makeText(this, "Unable to resend code", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // Check cooldown
+        // Enforce cooldown period between resend attempts
         long currentTime = System.currentTimeMillis() / 1000; // Convert to seconds
         long timeSinceLastResend = currentTime - lastResendTime;
 
@@ -242,6 +254,7 @@ public class VerificationActivity extends AppCompatActivity {
             return;
         }
 
+        // Set up callbacks for the verification process
         PhoneAuthProvider.OnVerificationStateChangedCallbacks callbacks =
                 new PhoneAuthProvider.OnVerificationStateChangedCallbacks() {
                     @Override
@@ -274,7 +287,8 @@ public class VerificationActivity extends AppCompatActivity {
                         codeInput.setText("");  // clear previous code
                     }
                 };
-        // show loading toast and start verification
+
+        /// Show loading feedback and initiate verification
         Toast.makeText(this, "Resending verification code...", Toast.LENGTH_SHORT).show();
         authController.startPhoneNumberVerification(phoneNumber, this, callbacks);
     }

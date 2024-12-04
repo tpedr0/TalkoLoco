@@ -40,6 +40,11 @@ import java.util.Locale;
 import javax.crypto.SecretKey;
 import com.example.talkoloco.utils.KeyManager;
 
+/**
+ * Activity handling one-on-one chat functionality with end-to-end encryption.
+ * Supports text messages and image sharing while maintaining message security
+ * through AES encryption with unique keys for each message.
+ */
 public class ChatActivity extends AppCompatActivity {
 
     private ActivityChatBinding binding;
@@ -51,6 +56,7 @@ public class ChatActivity extends AppCompatActivity {
     private KeyManager keyManager;
     private FirebaseFirestore database;
 
+    // Launcher for handling image selection from gallery
     private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -61,33 +67,32 @@ public class ChatActivity extends AppCompatActivity {
             }
     );
 
-
-
+    /**
+     * Initializes the chat activity, sets up encryption, and establishes
+     * connection with Firebase. Also validates user authentication state.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityChatBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Initialize the PreferenceManager first
+        // Initialize core components
         preferenceManager = new PreferenceManager(getApplicationContext());
-
-        // Initialize KeyManager right after PreferenceManager
         keyManager = new KeyManager(getApplicationContext());
-
-        // Initialize database
         database = FirebaseFirestore.getInstance();
 
 
-        // Debug log to check if user ID exists in preferences
+        // Verify user authentication state
         String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
         Log.d(TAG, "Current user ID from preferences: " + currentUserId);
 
-        // If current user ID is missing, try to recover it
+        // Attempt to recover user session if ID is missing
         if (currentUserId == null || currentUserId.isEmpty()) {
             retrieveCurrentUserFromFirestore();
         }
 
+        // Validate receiver user data
         receiverUser = (User) getIntent().getSerializableExtra(Constants.KEY_USER);
         if (receiverUser == null) {
             Log.e(TAG, "Receiver user is null");
@@ -98,12 +103,17 @@ public class ChatActivity extends AppCompatActivity {
 
         Log.d(TAG, "Received user: " + receiverUser.name + ", ID: " + receiverUser.id);
 
+        // Setup chat interface
         loadReceiverDetails();
         setListeners();
         init();
         listenMessages();
     }
 
+    /**
+     * Attempts to recover user session by querying Firestore with stored phone number.
+     * Redirects to login if recovery fails.
+     */
     private void retrieveCurrentUserFromFirestore() {
         // Get the current user's phone number
         String phoneNumber = preferenceManager.getString(Constants.KEY_PHONE_NUMBER);
@@ -115,7 +125,7 @@ public class ChatActivity extends AppCompatActivity {
                     .get()
                     .addOnSuccessListener(querySnapshot -> {
                         if (!querySnapshot.isEmpty()) {
-                            // Get the first document (user)
+                            // Restore user session
                             String userId = querySnapshot.getDocuments().get(0).getId();
                             Log.d(TAG, "Retrieved user ID from Firebase: " + userId);
 
@@ -146,6 +156,9 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Clears user session and redirects to login screen.
+     */
     private void redirectToLogin() {
         // Clear preferences
         preferenceManager.clear();
@@ -157,16 +170,18 @@ public class ChatActivity extends AppCompatActivity {
         finish();
     }
 
-
-
+    /**
+     * Initializes chat components including encryption keys and message adapter.
+     * Validates and sets up necessary security measures.
+     */
     private void init() {
         try {
-            // Ensure keyManager is initialized
+            // Ensure encryption is properly setup
             if (keyManager == null) {
                 keyManager = new KeyManager(getApplicationContext());
             }
 
-            // Validate encryption keys
+            // Validate and initialize encryption keys
             String privateKey = preferenceManager.getString("PRIVATE_KEY");
             String publicKey = preferenceManager.getString(Constants.KEY_PUBLIC_KEY);
 
@@ -178,12 +193,13 @@ public class ChatActivity extends AppCompatActivity {
 
             chatMessages = new ArrayList<>();
 
-            // Safely handle the receiver's profile picture
+            // Setup receiver's profile picture
             Bitmap receiverBitmap = ImageHandler.decodeImage(receiverUser.getProfilePictureUrl());
             if (receiverUser != null && receiverUser.profilePictureUrl != null && !receiverUser.profilePictureUrl.isEmpty()) {
                 binding.profilePic.setImageBitmap(receiverBitmap);
             }
 
+            // Initialize chat adapter
             chatAdapter = new ChatAdapter(
                     chatMessages,
                     receiverBitmap,
@@ -202,6 +218,12 @@ public class ChatActivity extends AppCompatActivity {
             finish();
         }
     }
+
+    /**
+     * Validates that all necessary encryption components are properly initialized.
+     *
+     * @return boolean indicating whether encryption is properly set up
+     */
     private boolean validateEncryptionSetup() {
         if (keyManager == null) {
             Log.e(TAG, "KeyManager is null");
@@ -224,9 +246,12 @@ public class ChatActivity extends AppCompatActivity {
         return true;
     }
 
-
-
+    /**
+     * Handles sending encrypted text messages. Generates a unique AES key for each message
+     * and encrypts it for both sender and receiver using their respective public keys.
+     */
     private void sendMessages() {
+        // Validate encryption setup before proceeding
         if (!validateEncryptionSetup()) {
             Toast.makeText(this, "Cannot send message: Encryption not properly initialized",
                     Toast.LENGTH_SHORT).show();
@@ -242,19 +267,16 @@ public class ChatActivity extends AppCompatActivity {
         }
 
         try {
-            // Generate a new AES key for this message
+            // Generate and encrypt message with new AES key
             SecretKey aesKey = keyManager.generateAESKey();
-
-            // Encrypt the message with AES
             String encryptedMessage = keyManager.encryptMessage(messageText, aesKey);
 
-            // Encrypt AES key for recipient
+            // Encrypt AES key for both participants
             String recipientEncryptedKey = keyManager.encryptAESKey(aesKey, receiverUser.getPublicKey());
-
-            // Encrypt AES key for yourself (using your own public key)
             String senderEncryptedKey = keyManager.encryptAESKey(aesKey,
                     preferenceManager.getString(Constants.KEY_PUBLIC_KEY));
 
+            // Prepare message data
             HashMap<String, Object> message = new HashMap<>();
             message.put(Constants.KEY_SENDER_ID, currentUserId);
             message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
@@ -264,6 +286,7 @@ public class ChatActivity extends AppCompatActivity {
             message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_TEXT);
             message.put(Constants.KEY_TIMESTAMP, new Date());
 
+            // Send to Firebase
             database.collection(Constants.KEY_COLLECTION_CHAT)
                     .add(message)
                     .addOnSuccessListener(documentReference -> {
@@ -288,10 +311,16 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Handles sending images in chat. Images are encoded but not encrypted.
+     * Validates user authentication and image size before sending.
+     */
     private void sendImage(){
         String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
         Log.d("ChatDebug", "Current User ID from preferences: " + currentUserId);
         Log.d("ChatDebug", "Receiver User ID: " + receiverUser.id);
+
+        // Validate user authentication
         if (currentUserId == null || currentUserId.isEmpty()) {
             Log.e("ChatDebug", "Current user ID is null or empty!");
             // Try to get the current user ID from Firebase Auth
@@ -321,8 +350,10 @@ public class ChatActivity extends AppCompatActivity {
             return;
         }
         try {
+            // Process and validate image
             String encodedImage = ImageHandler.encodeImage(this, selectedImageUri);
             if (ImageHandler.isImageSizeValid(encodedImage)) {
+                // Prepare message data
                 HashMap<String, Object> message = new HashMap<>();
                 message.put(Constants.KEY_SENDER_ID, currentUserId);
                 message.put(Constants.KEY_RECEIVER_ID, receiverUser.id);
@@ -330,6 +361,7 @@ public class ChatActivity extends AppCompatActivity {
                 message.put(Constants.KEY_MESSAGE_TYPE, Constants.MESSAGE_TYPE_IMAGE);  // Mark as image
                 message.put(Constants.KEY_TIMESTAMP, new Date());
 
+                // Send to Firebase
                 database.collection(Constants.KEY_COLLECTION_CHAT).add(message)
                         .addOnSuccessListener(documentReference -> {
                             binding.messageInput.setText(null);
@@ -345,25 +377,40 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
-
-
+    /**
+     * Sets up real-time message listening for both sent and received messages.
+     * Handles message decryption and display.
+     */
     private void listenMessages() {
         String currentUserId = preferenceManager.getString(Constants.KEY_USER_ID);
         if (currentUserId == null || receiverUser == null || receiverUser.id == null) {
             return;
         }
 
+        // Listen for sent messages
         database.collection(Constants.KEY_COLLECTION_CHAT)
                 .whereEqualTo("senderId", currentUserId)
                 .whereEqualTo("receiverId", receiverUser.id)
                 .addSnapshotListener(eventListener);
 
+        // Listen for received messages
         database.collection(Constants.KEY_COLLECTION_CHAT)
                 .whereEqualTo("receiverId", currentUserId)
                 .whereEqualTo("senderId", receiverUser.id)
                 .addSnapshotListener(eventListener);
     }
 
+    /**
+     * Listens for real-time chat message updates from Firebase.
+     * Handles both image and encrypted text messages, processes them accordingly,
+     * and updates the chat interface.
+     *
+     * For text messages:
+     * - Decrypts the message using the appropriate AES key (sender's or receiver's)
+     * - Handles decryption failures gracefully
+     * For images:
+     * - Processes them without encryption
+     */
     private final EventListener<QuerySnapshot> eventListener = (value, error) -> {
         if (error != null) return;
 
@@ -373,6 +420,7 @@ public class ChatActivity extends AppCompatActivity {
 
             for (DocumentChange documentChange : value.getDocumentChanges()) {
                 if (documentChange.getType() == DocumentChange.Type.ADDED) {
+                    // Create new message object for each incoming message
                     ChatMessages chatMessage = new ChatMessages();
                     chatMessage.senderId = documentChange.getDocument().getString(Constants.KEY_SENDER_ID);
                     chatMessage.receiverID = documentChange.getDocument().getString(Constants.KEY_RECEIVER_ID);
@@ -380,12 +428,13 @@ public class ChatActivity extends AppCompatActivity {
                     String messageType = documentChange.getDocument().getString(Constants.KEY_MESSAGE_TYPE);
 
                     if (messageType != null && messageType.equals(Constants.MESSAGE_TYPE_IMAGE)) {
-                        // Handle image message - no encryption
+                        // Process image messages without encryption
                         chatMessage.message = documentChange.getDocument().getString(Constants.KEY_MESSAGE);
                     } else {
                         // Handle text message - with encryption
                         String encryptedMessage = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_MESSAGE);
                         try {
+                            // Determine which encryption key to use based on message direction
                             String encryptedAESKey;
                             if (chatMessage.senderId.equals(currentUserId)) {
                                 // We're the sender, use sender's key
@@ -397,6 +446,7 @@ public class ChatActivity extends AppCompatActivity {
                                 encryptedAESKey = documentChange.getDocument().getString(Constants.KEY_ENCRYPTED_AES_KEY_RECIPIENT);
                             }
 
+                            // Decrypt the message using the appropriate key
                             SecretKey aesKey = keyManager.decryptAESKey(encryptedAESKey);
                             chatMessage.message = keyManager.decryptMessage(encryptedMessage, aesKey);
                         } catch (Exception e) {
@@ -405,16 +455,21 @@ public class ChatActivity extends AppCompatActivity {
                         }
                     }
 
+                    // Set message metadata
                     chatMessage.dateTime = getReadableDateTime(
                             documentChange.getDocument().getDate(Constants.KEY_TIMESTAMP));
                     chatMessage.dateObject = documentChange.getDocument().getDate(Constants.KEY_TIMESTAMP);
                     chatMessages.add(chatMessage);
                 }
             }
+
+            // Sort messages by timestamp and update UI
             Collections.sort(chatMessages, (obj1, obj2) -> obj1.dateObject.compareTo(obj2.dateObject));
             if (count == 0) {
+                // Initial load - update entire dataset
                 chatAdapter.notifyDataSetChanged();
             } else {
+                // New messages - insert at end
                 chatAdapter.notifyItemRangeInserted(chatMessages.size(), chatMessages.size());
                 binding.chatRecyclerView.smoothScrollToPosition(chatMessages.size() - 1);
             }
@@ -422,6 +477,13 @@ public class ChatActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * Converts a Base64 encoded string to a Bitmap image.
+     * Used for processing encoded profile pictures and image messages.
+     *
+     * @param encodedImage Base64 string representation of the image
+     * @return Bitmap of the decoded image, or null if the input is invalid
+     */
     private Bitmap getBitmapFromEncodedString(String encodedImage) {
         if (encodedImage == null || encodedImage.isEmpty()) {
             return null; // Return null if the image string is invalid
@@ -430,6 +492,11 @@ public class ChatActivity extends AppCompatActivity {
         return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
     }
 
+    /**
+     * Loads and displays the chat receiver's details in the chat header.
+     * Retrieves user information from the intent extras and updates the UI.
+     * Closes the activity if receiver details are missing.
+     */
     private void loadReceiverDetails() {
         receiverUser = (User) getIntent().getSerializableExtra(Constants.KEY_USER);
         if (receiverUser != null) {
@@ -440,27 +507,48 @@ public class ChatActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Configures click listeners for all interactive UI elements.
+     * Sets up navigation, message sending, image attachment, and profile viewing functionality.
+     */
     private void setListeners() {
+        // Navigatio
         binding.imageBack.setOnClickListener(v -> onBackPressed());
-        //chat
+        // Message sending
         binding.sendMessage.setOnClickListener(v-> sendMessages());
-
+        // Image Attachment
         binding.attachments.setOnClickListener(v -> openImagePicker());
-
+        // Profile viewing
         binding.profilePic.setOnClickListener(v -> viewProfile(receiverUser));
     }
 
+    /**
+     * Opens the system's image picker for selecting images to send.
+     * Configures necessary permissions and launches the picker activity.
+     */
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         imagePickerLauncher.launch(intent);
     }
 
+
+    /**
+     * Formats a Date object into a human-readable string format.
+     *
+     * @param date The Date object to format
+     * @return String formatted as "MMMM dd, yyyy - hh:mm a"
+     */
     private String getReadableDateTime(Date date) {
         return new SimpleDateFormat("MMMM dd, yyyy - hh:mm a",
                 Locale.getDefault()).format(date);
     }
 
+    /**
+     * Launches the profile viewing activity for the specified user.
+     *
+     * @param user The User object whose profile should be displayed
+     */
     private void viewProfile(User user){
         Intent intent = new Intent(this, ViewProfileActivity.class);
         intent.putExtra(Constants.KEY_USER,user);

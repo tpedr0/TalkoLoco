@@ -99,7 +99,6 @@ public class SettingsActivity extends AppCompatActivity {
         setupDarkMode();
         setupSignOutButton();
 
-
         // setup profile picture click
         binding.profileIcon.setOnClickListener(v -> showProfilePictureOptions());
 

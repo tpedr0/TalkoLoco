@@ -1,5 +1,9 @@
 package com.example.talkoloco.utils;
 
+/**
+ * Constants class containing all static final values used throughout the application.
+ * Centralizes configuration values and string constants for consistency and maintainability.
+ */
 public class Constants {
 
     // firebase collections
@@ -35,7 +39,6 @@ public class Constants {
     public static final String KEY_ENCRYPTED_AES_KEY = "encryptedAESKey";
     public static final String KEY_ENCRYPTED_AES_KEY_RECIPIENT = "encryptedAESKeyRecipient";
     public static final String KEY_ENCRYPTED_AES_KEY_SENDER = "encryptedAESKeySender";
-
     public static final String KEY_MESSAGE_TYPE = "messageType";
     public static final String MESSAGE_TYPE_TEXT = "text";
     public static final String MESSAGE_TYPE_IMAGE = "image";

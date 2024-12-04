@@ -22,8 +22,14 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * Manages encryption and key operations for secure message exchange.
+ * Handles RSA key pair generation, AES key generation, and message encryption/decryption.
+ */
 public class KeyManager {
     private static final String TAG = "KeyManager";
+
+    // Cryptographic constants
     private static final String RSA_ALIAS = "UserRSAKey";
     private static final String AES_TRANSFORMATION = "AES/CBC/PKCS5Padding";  // For encryption/decryption
     private static final String AES_ALGORITHM = "AES";  // For key generation
@@ -34,39 +40,50 @@ public class KeyManager {
     private final Context context;
     private final PreferenceManager preferenceManager;
 
+    /**
+     * Initializes the KeyManager with application context for preferences access.
+     *
+     * @param context Application context for accessing preferences
+     */
     public KeyManager(Context context) {
         this.context = context;
         this.preferenceManager = new PreferenceManager(context);
     }
 
     /**
-     * Generates a new RSA key pair for the user
+     * Generates or retrieves RSA key pair for the user.
+     * Keys are stored securely in preferences.
+     *
      * @return Base64 encoded public key
+     * @throws RuntimeException if key generation fails
      */
     public String generateUserKeys() {
         try {
             Log.d(TAG, "Starting key generation process");
+            // Check for existing keys
             String existingPrivateKey = preferenceManager.getString("PRIVATE_KEY");
             String existingPublicKey = preferenceManager.getString(Constants.KEY_PUBLIC_KEY);
             Log.d(TAG, "Existing keys - Private: " + (existingPrivateKey != null) + ", Public: " + (existingPublicKey != null));
 
+            // Return existing public key if both keys exist
             if (existingPrivateKey != null && existingPublicKey != null) {
                 Log.d(TAG, "Using existing keys");
                 return existingPublicKey;
             }
 
+            // Generate new RSA key pair
             Log.d(TAG, "Generating new RSA key pair");
             KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
             keyPairGenerator.initialize(RSA_KEY_SIZE);
             KeyPair keyPair = keyPairGenerator.generateKeyPair();
 
-            // Store the private key
+            // Save private key
             byte[] privateKeyBytes = keyPair.getPrivate().getEncoded();
             String privateKeyString = Base64.encodeToString(privateKeyBytes, Base64.NO_WRAP);
             preferenceManager.putString("PRIVATE_KEY", privateKeyString);
             Log.d(TAG, "Stored new private key, length: " + privateKeyString.length());
 
-            // Get public key string
+            // Save and return public key
             byte[] publicKeyBytes = keyPair.getPublic().getEncoded();
             String publicKeyString = Base64.encodeToString(publicKeyBytes, Base64.NO_WRAP);
             preferenceManager.putString(Constants.KEY_PUBLIC_KEY, publicKeyString);
@@ -79,6 +96,12 @@ public class KeyManager {
         }
     }
 
+    /**
+     * Retrieves the private key from preferences and converts it to a PrivateKey object.
+     *
+     * @return PrivateKey object for decryption
+     * @throws RuntimeException if private key is missing or invalid
+     */
     private PrivateKey getPrivateKey() {
         try {
             String privateKeyString = preferenceManager.getString("PRIVATE_KEY");
@@ -99,7 +122,10 @@ public class KeyManager {
     }
 
     /**
-     * Generates a random AES key for message encryption
+     * Generates a new AES key for message encryption.
+     *
+     * @return SecretKey object for AES encryption
+     * @throws RuntimeException if key generation fails
      */
     public SecretKey generateAESKey() {
         try {
@@ -114,21 +140,26 @@ public class KeyManager {
     }
 
     /**
-     * Encrypts a message using AES
+     * Encrypts a message using AES encryption with a random IV.
+     *
+     * @param message Message to encrypt
+     * @param aesKey AES key for encryption
+     * @return Base64 encoded string containing IV and encrypted message
+     * @throws RuntimeException if encryption fails
      */
     public String encryptMessage(String message, SecretKey aesKey) {
         try {
-            // Generate IV
+            // Create and initialize IV
             byte[] iv = new byte[16];
             SecureRandom random = new SecureRandom();
             random.nextBytes(iv);
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
-            // Initialize cipher with IV
+            // Initialize cipher for encryption
             Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
             cipher.init(Cipher.ENCRYPT_MODE, aesKey, ivSpec);
 
-            // Encrypt
+            // Perform encryption
             byte[] encryptedBytes = cipher.doFinal(message.getBytes());
 
             // Combine IV and encrypted data
@@ -144,23 +175,29 @@ public class KeyManager {
     }
 
     /**
-     * Decrypts a message using AES
+     * Decrypts an AES encrypted message.
+     *
+     * @param encryptedMessage Base64 encoded string containing IV and encrypted message
+     * @param aesKey AES key for decryption
+     * @return Decrypted message string
+     * @throws RuntimeException if decryption fails
      */
     public String decryptMessage(String encryptedMessage, SecretKey aesKey) {
         try {
             byte[] combined = Base64.decode(encryptedMessage, Base64.NO_WRAP);
 
-            // Extract IV and encrypted data
+            // Separate IV and encrypted data
             byte[] iv = new byte[16];
             byte[] encrypted = new byte[combined.length - 16];
             System.arraycopy(combined, 0, iv, 0, 16);
             System.arraycopy(combined, 16, encrypted, 0, encrypted.length);
 
+            // Initialize cipher for decryption
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
-
             Cipher cipher = Cipher.getInstance(AES_TRANSFORMATION);
             cipher.init(Cipher.DECRYPT_MODE, aesKey, ivSpec);
 
+            // Perform decryption
             byte[] decryptedBytes = cipher.doFinal(encrypted);
             return new String(decryptedBytes);
         } catch (Exception e) {
@@ -168,20 +205,26 @@ public class KeyManager {
             throw new RuntimeException("Failed to decrypt message", e);
         }
     }
+
     /**
-     * Encrypts the AES key using recipient's public key
+     * Encrypts an AES key using RSA public key encryption for secure key exchange.
+     *
+     * @param aesKey AES key to encrypt
+     * @param recipientPublicKeyString Recipient's public key as Base64 string
+     * @return Encrypted AES key as Base64 string
+     * @throws RuntimeException if encryption fails
      */
     public String encryptAESKey(SecretKey aesKey, String recipientPublicKeyString) {
         try {
             Log.d(TAG, "Encrypting AES key with recipient's public key");
 
-            // Decode public key
+            // Convert public key string to PublicKey object
             byte[] publicKeyBytes = Base64.decode(recipientPublicKeyString, Base64.NO_WRAP);
             X509EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(publicKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             PublicKey publicKey = keyFactory.generatePublic(publicKeySpec);
 
-            // Encrypt
+            // Encrypt AES key with RSA
             Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
             cipher.init(Cipher.ENCRYPT_MODE, publicKey);
             byte[] encryptedKey = cipher.doFinal(aesKey.getEncoded());
@@ -192,23 +235,30 @@ public class KeyManager {
         }
     }
 
+    /**
+     * Decrypts an RSA encrypted AES key using the private key.
+     *
+     * @param encryptedKeyString Encrypted AES key as Base64 string
+     * @return Decrypted AES key
+     * @throws RuntimeException if decryption fails or private key is missing
+     */
     public SecretKey decryptAESKey(String encryptedKeyString) {
         try {
             Log.d(TAG, "Decrypting AES key");
 
-            // Get stored private key
+            // Retrieve and verify private key
             String privateKeyString = preferenceManager.getString("PRIVATE_KEY");
             if (privateKeyString == null) {
                 throw new RuntimeException("Private key not found");
             }
 
-            // Decode private key
+            // Convert private key string to PrivateKey object
             byte[] privateKeyBytes = Base64.decode(privateKeyString, Base64.NO_WRAP);
             PKCS8EncodedKeySpec privateKeySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
             PrivateKey privateKey = keyFactory.generatePrivate(privateKeySpec);
 
-            // Decrypt
+            // Decrypt AES key
             Cipher cipher = Cipher.getInstance(RSA_ALGORITHM);
             cipher.init(Cipher.DECRYPT_MODE, privateKey);
             byte[] decryptedKey = cipher.doFinal(Base64.decode(encryptedKeyString, Base64.NO_WRAP));

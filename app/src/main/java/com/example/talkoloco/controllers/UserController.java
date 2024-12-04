@@ -135,29 +135,6 @@ public class UserController {
                 });
     }
 
-    public void updatePhoneNumber(String userId, String phoneNumber, OnSuccessListener<Void> onSuccessListener,
-                                  OnFailureListener onFailureListener) {
-        // Ensure userId is provided
-        if (userId == null || userId.isEmpty()) {
-            onFailureListener.onFailure(new IllegalArgumentException("User ID cannot be null or empty"));
-            return;
-        }
-
-        // Hash the phone number before saving
-        String hashedPhoneNumber = Hash.hashPhoneNumber(phoneNumber);
-
-        Map<String, Object> updates = new HashMap<>();
-        updates.put(Constants.KEY_PHONE_NUMBER, hashedPhoneNumber);
-
-        // Update Firestore
-        db.collection(Constants.KEY_COLLECTION_USERS)
-                .document(userId)
-                .set(updates, SetOptions.merge())
-                .addOnSuccessListener(onSuccessListener)
-                .addOnFailureListener(onFailureListener);
-    }
-
-
     /**
      * Updates specified fields for a user in the Firestore database.
      *
