@@ -40,6 +40,9 @@ public class FriendsListActivity extends AppCompatActivity implements UserListen
         getUsers();
     }
 
+    /**
+     * method that will get users from firebase and place them in a list
+     */
     private void getUsers(){
         FirebaseFirestore database = FirebaseFirestore.getInstance();
         database.collection(Constants.KEY_COLLECTION_USERS).get()
@@ -73,11 +76,20 @@ public class FriendsListActivity extends AppCompatActivity implements UserListen
                     }
                 });
     }
+
+    /**
+     * method that will show error to user
+     */
     private void showErrorMessage(){
         Toast.makeText(this,
                 "No users found :(",
                 Toast.LENGTH_SHORT).show();
     }
+
+    /**
+     * method that will take user to view profile of user
+     * @param user user object
+     */
     @Override
     public void onUserClicked(User user) {
         Intent intent = new Intent(this, ViewProfileActivity.class);
