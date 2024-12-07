@@ -16,7 +16,7 @@ public class User implements Serializable {
     private String phoneNumber_hash;
     private String publicKey;
 
-    public String image, email, token, id;
+    public String image, token, id;
 
 
     /**

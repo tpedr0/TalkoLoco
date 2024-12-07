@@ -99,14 +99,16 @@ public class SettingsActivity extends AppCompatActivity {
         setupDarkMode();
         setupSignOutButton();
 
-
         // setup profile picture click
         binding.profileIcon.setOnClickListener(v -> showProfilePictureOptions());
 
         // load user data
         loadUserData();
     }
-
+    /**
+     * Sets up the dark mode toggle functionality.
+     * Updates the button icon based on current theme and handles theme switching.
+     */
     private void setupDarkMode() {
         // update button icon based on current mode
         binding.darkModeButton.setImageResource(
@@ -123,6 +125,10 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * Configures the status dropdown menu with available user statuses.
+     * Handles both predefined and custom status inputs.
+     */
     private void setupStatusDropdown() {
         // initialize adapter with all statuses
         statusAdapter = new ArrayAdapter<>(
@@ -151,6 +157,10 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Sets up the name editing functionality with input validation and save behavior.
+     * Includes focus handling and keyboard management.
+     */
     private void setupNameEditing() {
         binding.nameInput.setEnabled(false);
         binding.nameInput.setFocusable(false);
@@ -185,6 +195,10 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * Saves changes made to the user's name after validation.
+     * Updates both local state and remote database.
+     */
     private void saveNameChanges() {
         String newName = binding.nameInput.getText().toString().trim();
         if (!newName.isEmpty() && currentUser != null) {
@@ -335,6 +349,10 @@ public class SettingsActivity extends AppCompatActivity {
 
 
 
+    /**
+     * Initiates the phone number verification process.
+     * Shows confirmation dialog and checks for duplicate numbers.
+     */
     private void verifyAndSavePhoneNumber() {
         String newPhoneNumber = binding.currentPhoneNumber.getText().toString().trim();
 
@@ -378,6 +396,10 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * method that checks if number is valid and saves if it is
+     * @param newPhoneNumber number to be checked
+     */
     private void checkAndSavePhoneNumber(String newPhoneNumber) {
         // Check in Firebase for duplicates
         userController.doesPhoneNumberExist(newPhoneNumber, exists -> {
@@ -397,7 +419,10 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
-
+    /**
+     * method that will verify phone number
+     * @param newPhoneNumber number to be verified
+     */
     private void startPhoneVerification(String newPhoneNumber) {
         String formattedPhoneNumber = formatPhoneNumber(newPhoneNumber);
 
@@ -440,7 +465,10 @@ public class SettingsActivity extends AppCompatActivity {
         );
     }
 
-
+    /**
+     * method that will update phone number
+     * @param newPhoneNumber number that will be used in update
+     */
     private void updateUserPhoneNumber(String newPhoneNumber) {
         String userId = authController.getCurrentUserId();
         if (userId != null && currentUser != null) {
@@ -474,6 +502,14 @@ public class SettingsActivity extends AppCompatActivity {
 
 
 
+    /**
+     * Handles activity results, particularly for phone verification requests.
+     * Updates user data based on verification results.
+     *
+     * @param requestCode The request code passed to startActivityForResult()
+     * @param resultCode The result code returned by the child activity
+     * @param data Intent containing result data
+     */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -499,6 +535,10 @@ public class SettingsActivity extends AppCompatActivity {
             }
         }
     }
+
+    /**
+     * method that will reset the status on the phone edit
+     */
     private void resetPhoneEditState() {
         binding.currentPhoneNumber.setEnabled(false);
         binding.currentPhoneNumber.setFocusable(false);
@@ -526,6 +566,11 @@ public class SettingsActivity extends AppCompatActivity {
 //    }
 
 
+    /**
+     * method that will format number given
+     * @param phoneNumber number to be formated
+     * @return formated phone number
+     */
     private String formatPhoneNumber(String phoneNumber) {
         // Remove any non-digit characters
         String digitsOnly = phoneNumber.replaceAll("[^0-9]", "");
@@ -540,7 +585,9 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
-
+    /**
+     * method that will show user options for profile picture
+     */
     private void showProfilePictureOptions() {
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
         View bottomSheetView = getLayoutInflater().inflate(R.layout.activity_pfp_options, null);
@@ -573,6 +620,9 @@ public class SettingsActivity extends AppCompatActivity {
         bottomSheetDialog.show();
     }
 
+    /**
+     * method that will show the full screen version of the user's profile picture
+     */
     private void showFullscreenImage() {
         if (currentUser == null || currentUser.getProfilePictureUrl() == null) {
             Toast.makeText(this, "No profile picture available", Toast.LENGTH_SHORT).show();
@@ -617,12 +667,19 @@ public class SettingsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    /**
+     * method that will allow the user to pick an image for their profile picture
+     */
     private void openImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
         imagePickerLauncher.launch(intent);
     }
 
+    /**
+     * method that will update profile picture of user
+     * @param imageUri uri of the image
+     */
     private void updateProfilePicture(Uri imageUri) {
         try {
             String encodedImage = ImageHandler.encodeImage(this, imageUri);
@@ -648,6 +705,9 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * method that will confirm if user wants to remove profile picture
+     */
     private void showRemovePhotoConfirmation() {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Remove Profile Picture")
@@ -663,6 +723,9 @@ public class SettingsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    /**
+     * method that will remove profile picture
+     */
     private void removeProfilePicture() {
         String userId = authController.getCurrentUserId();
         if (userId != null && currentUser != null) {
@@ -680,10 +743,16 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * method that prepares delete button
+     */
     private void setupDeleteButton() {
         binding.deleteAccount.setOnClickListener(v -> showDeleteAccountConfirmation());
     }
 
+    /**
+     * method that confirms if user wants to delete account
+     */
     private void showDeleteAccountConfirmation() {
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Delete Account")
@@ -699,6 +768,9 @@ public class SettingsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    /**
+     * method that will deleter user's account
+     */
     private void deleteAccount() {
         String userId = authController.getCurrentUserId();
         if (userId != null) {
@@ -713,6 +785,9 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * method that will load the data from the user
+     */
     private void loadUserData() {
         binding.profileIcon.setAlpha(0.5f);
         String userId = authController.getCurrentUserId();
@@ -743,6 +818,10 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * method that will update ui with user info
+     * @param user user object
+     */
     private void updateUI(User user) {
         try {
             this.currentUser = user;
@@ -808,6 +887,10 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * method that will show keyboard
+     * @param view view
+     */
     private void showKeyboard(View view) {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
@@ -816,6 +899,10 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
 
+    /**
+     * method that will save status that is selected from user
+     * @param newStatus selected status
+     */
     private void saveNewStatus(String newStatus) {
         String userId = authController.getCurrentUserId();
         if (userId != null && currentUser != null) {
@@ -842,6 +929,9 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * method that will hide keyboard
+     */
     private void hideKeyboard() {
         InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
@@ -849,6 +939,9 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * methot that prepares button to sign out
+     */
     private void setupSignOutButton() {
         Button signOutButton = binding.signOutButton;
         signOutButton.setOnClickListener(v -> {
@@ -859,6 +952,9 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * method that will notify user of successful log out
+     */
     private void showLogoutToast() {
         Toast.makeText(SettingsActivity.this, "Successfully logged out", Toast.LENGTH_SHORT).show();
     }

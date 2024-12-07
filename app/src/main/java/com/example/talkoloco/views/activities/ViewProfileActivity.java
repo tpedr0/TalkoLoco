@@ -45,6 +45,9 @@ public class ViewProfileActivity extends AppCompatActivity {
         loadReceiverDetails();
     }
 
+    /**
+     * method that loads details from clicked user
+     */
     private void loadReceiverDetails() {
         viewedUser = (User) getIntent().getSerializableExtra(Constants.KEY_USER);
         //handle profile picture

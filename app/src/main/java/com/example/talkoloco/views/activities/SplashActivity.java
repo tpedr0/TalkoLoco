@@ -10,18 +10,30 @@ import com.example.talkoloco.R;
 import com.example.talkoloco.databinding.ActivitySplashPortraitBinding;
 import com.example.talkoloco.databinding.ActivitySplashLandscapeBinding;
 
+/**
+ * Entry point activity that displays a splash screen animation.
+ * Handles both portrait and landscape orientations with different layouts and animations.
+ * Automatically transitions to MainActivity after the animation completes.
+ */
 public class SplashActivity extends AppCompatActivity {
+    // View binding objects for different orientations
     private ActivitySplashPortraitBinding portraitBinding;
     private ActivitySplashLandscapeBinding landscapeBinding;
 
+    /**
+     * Initializes the activity and sets up the appropriate layout and animation
+     * based on the current screen orientation.
+     *
+     * @param savedInstanceState If non-null, this activity is being re-initialized after previously being shut down
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // gets current orientation
+        // Determine current screen orientation
         int orientation = getResources().getConfiguration().orientation;
 
-        // sets appropriate layout and binding based on orientation
+        // Configure layout and animation based on orientation
         if (orientation == Configuration.ORIENTATION_LANDSCAPE) {
             landscapeBinding = ActivitySplashLandscapeBinding.inflate(getLayoutInflater());
             setContentView(landscapeBinding.getRoot());
@@ -43,29 +55,48 @@ public class SplashActivity extends AppCompatActivity {
         }
     }
 
+
+    /**
+     * Animation listener that handles the transition to MainActivity
+     * once the splash animation completes.
+     */
     private final Animator.AnimatorListener animatorListener = new Animator.AnimatorListener() {
         @Override
-        public void onAnimationStart(Animator animation) {}
+        public void onAnimationStart(Animator animation) {
+            // Not used, but required by interface
+        }
 
         @Override
         public void onAnimationEnd(Animator animation) {
+            // Start MainActivity and finish this activity when animation ends
             startActivity(new Intent(SplashActivity.this, MainActivity.class));
             finish();
         }
 
         @Override
-        public void onAnimationCancel(Animator animation) {}
+        public void onAnimationCancel(Animator animation) {
+            // Not used, but required by interface
+        }
 
         @Override
-        public void onAnimationRepeat(Animator animation) {}
+        public void onAnimationRepeat(Animator animation) {
+            // Not used, but required by interface
+        }
     };
 
+    /**
+     * Handles runtime changes in screen orientation.
+     * Reconfigures the layout and restarts the animation when orientation changes.
+     *
+     * @param newConfig The new device configuration
+     */
     @Override
     public void onConfigurationChanged(@NonNull Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
 
-        // handles orientation change and sets appropriate layout
+        // Reconfigure layout based on new orientation
         if (newConfig.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+            // Clean up portrait binding if it exists
             if (portraitBinding != null) {
                 portraitBinding = null;
             }
@@ -76,6 +107,7 @@ public class SplashActivity extends AppCompatActivity {
             landscapeBinding.splashscreenLandscape.playAnimation();
             landscapeBinding.splashscreenLandscape.addAnimatorListener(animatorListener);
         } else {
+            // Clean up landscape binding if it exists
             if (landscapeBinding != null) {
                 landscapeBinding = null;
             }
@@ -88,10 +120,14 @@ public class SplashActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Cleans up resources when the activity is destroyed.
+     * Prevents memory leaks by nullifying view bindings.
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
         portraitBinding = null;
-        landscapeBinding = null;
+        landscapeBinding = null; // Prevents memory leaks
     }
 }

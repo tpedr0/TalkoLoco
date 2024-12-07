@@ -11,15 +11,28 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Utility class for handling image processing operations.
+ * Provides functionality for encoding, decoding, scaling, and validating images.
+ */
 public class ImageHandler {
     private static final String TAG = "ImageHandler";
+    // Maximum allowed dimension (width or height) for images
     private static final int MAX_IMAGE_DIMENSION = 800;
+    // JPEG compression quality for processed images
     private static final int COMPRESSION_QUALITY = 75;
 
     /**
-     * processes and encodes an image URI to a Base64 string
+     * Processes and encodes an image URI to a Base64 string.
+     * Handles image scaling and compression for optimal storage and transmission.
+     *
+     * @param context The context to use for content resolution
+     * @param imageUri The URI of the image to process
+     * @return Base64 encoded string of the processed image
+     * @throws IOException if image processing fails
      */
     public static String encodeImage(Context context, Uri imageUri) throws IOException {
+        // Open input stream from URI
         InputStream inputStream = context.getContentResolver().openInputStream(imageUri);
         Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
 
@@ -30,26 +43,32 @@ public class ImageHandler {
         // Scale the image down if it's too large
         bitmap = scaleBitmap(bitmap);
 
-        // Convert to Base64
+        // Convert to Base64 with compression
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.JPEG, COMPRESSION_QUALITY, baos);
         byte[] imageBytes = baos.toByteArray();
 
+        // Clean up resources
         bitmap.recycle();
         return Base64.encodeToString(imageBytes, Base64.DEFAULT);
     }
 
     /**
-     * scales down the bitmap if it exceeds maximum dimensions
+     * Scales down a bitmap if it exceeds maximum dimensions while maintaining aspect ratio.
+     *
+     * @param original The original bitmap to scale
+     * @return Scaled bitmap if necessary, or original bitmap if already within limits
      */
     private static Bitmap scaleBitmap(Bitmap original) {
         int width = original.getWidth();
         int height = original.getHeight();
 
+        // Return original if within size limits
         if (width <= MAX_IMAGE_DIMENSION && height <= MAX_IMAGE_DIMENSION) {
             return original;
         }
 
+        // Calculate scaling ratio to fit within bounds
         float ratio = Math.min(
                 (float) MAX_IMAGE_DIMENSION / width,
                 (float) MAX_IMAGE_DIMENSION / height
@@ -62,7 +81,10 @@ public class ImageHandler {
     }
 
     /**
-     * decodes a Base64 string back to a Bitmap
+     * Decodes a Base64 encoded string back to a Bitmap.
+     *
+     * @param base64String The Base64 encoded image string
+     * @return Decoded Bitmap, or null if decoding fails
      */
     public static Bitmap decodeImage(String base64String) {
         try {
@@ -75,7 +97,11 @@ public class ImageHandler {
     }
 
     /**
-     * validates if the image size is within acceptable limits
+     * Validates if an encoded image's size is within acceptable limits.
+     * Current limit is set to 1MB after Base64 encoding.
+     *
+     * @param base64String The Base64 encoded image to check
+     * @return boolean indicating if the image size is valid
      */
     public static boolean isImageSizeValid(String base64String) {
         // Checking if encoded image is less than 1MB

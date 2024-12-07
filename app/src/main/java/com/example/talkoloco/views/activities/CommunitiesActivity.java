@@ -13,6 +13,9 @@ public class CommunitiesActivity extends AppCompatActivity {
     private ActivityCommunitiesBinding binding;
     private NavigationController navigationController;
 
+    /**
+     * Initializes the Communities activity
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
